@@ -775,7 +775,10 @@
     reviewBtn.disabled = true; reviewBtn.textContent = 'Reviewing\u2026';
     flush().then(function () { return post({ action: 'review' }); }).then(function (res) {
       if (res && res.ok && res.report) { renderReview(res.report); flash(reviewStatus, ''); }
-      else { flash(reviewStatus, (res && res.error) ? ('Review: ' + res.error) : 'Review failed — try again.'); }
+      else {
+        if (res && res.raw) { try { console.warn('Review parse failed. Raw model output:', res.raw); } catch (e) {} }
+        flash(reviewStatus, (res && res.error) ? ('Review: ' + res.error) : 'Review failed — try again.', 6000);
+      }
     }).catch(function () { flash(reviewStatus, 'Review failed — check your connection.'); })
       .finally(function () { reviewBtn.disabled = false; reviewBtn.textContent = 'Analyze'; });
   });

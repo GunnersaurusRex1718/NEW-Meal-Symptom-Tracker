@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>The Ticket Rail</title>
+<meta name="theme-color" content="#20282E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ticket Rail">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;800&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #20282E; color: #DCE3E8;
+    font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+    min-height: 100vh; padding-bottom: 64px;
+    padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
+  }
+  .wrap { max-width: 620px; margin: 0 auto; padding: 0 16px; }
+
+  /* Header */
+  header {
+    background: linear-gradient(180deg, #2A343B 0%, #232C32 100%);
+    border-bottom: 3px solid #37424A;
+    padding: calc(22px + env(safe-area-inset-top)) 0 18px;
+  }
+  .head-top { display: flex; align-items: flex-start; gap: 12px; }
+  .brand {
+    font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 34px;
+    letter-spacing: 3px; text-transform: uppercase; color: #F5F3EA; line-height: 1;
+  }
+  .brand span { color: #E7AF12; }
+  .tagline {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px;
+    text-transform: uppercase; color: #77828B; margin-top: 6px;
+  }
+  .gear {
+    margin-left: auto; background: transparent; border: none; color: #77828B;
+    font-size: 22px; cursor: pointer; padding: 2px 6px; line-height: 1;
+  }
+  .gear:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
+
+  /* Sync status pill */
+  .sync {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 12px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px;
+    text-transform: uppercase; padding: 4px 10px; border-radius: 20px;
+    border: 1px solid #37424A; color: #9AA6AE; cursor: pointer;
+  }
+  .sync .dot { width: 8px; height: 8px; border-radius: 50%; background: #77828B; flex: none; }
+  .sync.synced .dot { background: #4F9B4E; }
+  .sync.syncing .dot { background: #E7AF12; }
+  .sync.pending .dot { background: #E7AF12; }
+  .sync.offline .dot { background: #A03332; }
+  .sync.error .dot { background: #A03332; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 6px; margin-top: 16px; }
+  .tab {
+    font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 15px;
+    letter-spacing: 2px; text-transform: uppercase; padding: 8px 18px 6px; border: none;
+    border-radius: 3px 3px 0 0; cursor: pointer; background: #2E383F; color: #77828B;
+  }
+  .tab.on { background: #F5F3EA; color: #23211C; }
+  .tab.on.tab-symptom { background: #F3E4E1; color: #A03332; }
+  .tab:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
+
+  /* Writers */
+  .writer { background: #F5F3EA; color: #23211C; padding: 14px 14px 16px; border-radius: 0 3px 2px 2px; box-shadow: 0 3px 0 #14191D; }
+  .writer.symptom-writer { background: #F3E4E1; display: none; }
+  .writer-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #77828B; margin-bottom: 8px; }
+  .symptom-writer .writer-label { color: #A98782; }
+  .writer input[type="text"] {
+    width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #23211C;
+    background: transparent; border: none; border-bottom: 2px dashed #B8B3A4; padding: 6px 2px 8px; outline: none;
+  }
+  .writer input[type="text"]:focus { border-bottom-color: #23211C; }
+  .writer input[type="text"]::placeholder { color: #A8A395; }
+  .symptom-writer input[type="text"] { border-bottom-color: #D3B4AE; }
+  .field-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #A98782; margin: 14px 0 6px; }
+
+  .meal-row, .sev-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .sev-row { margin-top: 0; }
+  .meal-btn, .sev-btn {
+    font-family: 'Saira Condensed', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: 1.5px;
+    text-transform: uppercase; background: transparent; border: 2px solid #B8B3A4; color: #77828B;
+    padding: 6px 12px; border-radius: 2px; cursor: pointer;
+  }
+  .meal-btn:focus-visible, .sev-btn:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
+  .meal-btn[data-meal="Breakfast"].on { border-color: #E7AF12; color: #8A6A0B; background: #FBF0CE; }
+  .meal-btn[data-meal="Lunch"].on     { border-color: #4F9B4E; color: #2F6B2E; background: #E3F0E2; }
+  .meal-btn[data-meal="Dinner"].on    { border-color: #A03332; color: #A03332; background: #F5E1E0; }
+  .meal-btn[data-meal="Snack"].on     { border-color: #2F8B8B; color: #1F6666; background: #DFF0F0; }
+  .meal-btn[data-meal="Other"].on     { border-color: #77828B; color: #4E5860; background: #E9ECEE; }
+  .sev-btn { border-color: #D3B4AE; color: #A98782; }
+  .sev-btn.on { border-color: #A03332; color: #FDF7F6; background: #A03332; }
+
+  .time-row { display: flex; gap: 8px; align-items: center; }
+  .time-row input[type="datetime-local"] {
+    font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #23211C; background: #FBF3F1;
+    border: 2px solid #D3B4AE; border-radius: 2px; padding: 6px 8px; flex: 1; min-width: 0;
+  }
+  .now-btn {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+    background: transparent; border: 2px solid #D3B4AE; color: #A98782; padding: 7px 10px; border-radius: 2px; cursor: pointer;
+  }
+  .now-btn:hover { border-color: #A03332; color: #A03332; }
+
+  .add-row { display: flex; justify-content: flex-end; margin-top: 14px; }
+  .add-btn {
+    font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 17px; letter-spacing: 2.5px;
+    text-transform: uppercase; background: #23211C; color: #F5F3EA; border: none; padding: 10px 26px;
+    border-radius: 2px; cursor: pointer; box-shadow: 2px 2px 0 #B8B3A4;
+  }
+  .symptom-writer .add-btn { background: #A03332; box-shadow: 2px 2px 0 #D3B4AE; }
+  .add-btn:active { transform: translate(1px, 1px); }
+  .add-btn:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
+  .status { margin-top: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #A03332; min-height: 16px; }
+
+  /* Chef's review */
+  .review-bar { display: flex; align-items: center; gap: 12px; margin-top: 26px; background: linear-gradient(180deg,#414D56 0%,#37424A 55%,#2E383F 100%); border-radius: 3px; padding: 10px 14px; box-shadow: 0 2px 0 #14191D; }
+  .review-bar h2 { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 19px; letter-spacing: 2.5px; text-transform: uppercase; color: #F5F3EA; }
+  .review-btn { margin-left: auto; font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; background: #E7AF12; color: #23211C; border: none; padding: 9px 18px; border-radius: 2px; cursor: pointer; box-shadow: 0 2px 0 #14191D; }
+  .review-btn:disabled { background: #77828B; color: #2E383F; cursor: wait; }
+  .review-btn:focus-visible { outline: 3px solid #F5F3EA; outline-offset: 2px; }
+  .review-panel { display: none; background: #F5F3EA; color: #23211C; margin-top: 14px; padding: 16px; border-radius: 2px; box-shadow: 0 3px 0 #14191D; }
+  .review-panel h3 { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; margin: 16px 0 8px; border-bottom: 2px solid #B8B3A4; padding-bottom: 4px; }
+  .review-panel h3:first-child { margin-top: 0; }
+  .review-panel p, .review-panel li { font-size: 14px; line-height: 1.55; }
+  .review-panel ul { padding-left: 20px; margin-top: 6px; }
+  .suspect { border: 2px solid #B8B3A4; border-radius: 2px; padding: 10px 12px; margin-top: 10px; background: #FBF9F2; }
+  .suspect-head { display: flex; align-items: center; gap: 10px; }
+  .suspect-name { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 14px; }
+  .conf { margin-left: auto; font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; padding: 2px 8px 1px; border: 2px solid currentColor; border-radius: 2px; transform: rotate(-2deg); }
+  .conf.high { color: #A03332; } .conf.medium { color: #8A6A0B; } .conf.low { color: #4E5860; }
+  .suspect-evidence { margin-top: 6px; color: #4E5860; }
+  .disclaimer { margin-top: 16px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.5; color: #77828B; border-top: 2px dashed #B8B3A4; padding-top: 10px; }
+
+  /* Day rails + tickets */
+  .day { margin-top: 30px; }
+  .rail { display: flex; align-items: center; gap: 12px; background: linear-gradient(180deg,#414D56 0%,#37424A 55%,#2E383F 100%); border-radius: 3px; padding: 8px 14px; box-shadow: 0 2px 0 #14191D; }
+  .rail::before, .rail::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5C6A74, #1B2227 75%); flex: none; }
+  .rail::after { margin-left: auto; }
+  .rail h2 { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 19px; letter-spacing: 2.5px; text-transform: uppercase; color: #F5F3EA; }
+  .rail .count { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #9AA6AE; letter-spacing: 1px; }
+  .tickets { list-style: none; padding: 6px 8px 0; }
+  .ticket { background: #F5F3EA; color: #23211C; margin-top: 14px; padding: 12px 14px; border-radius: 2px; box-shadow: 0 3px 0 #14191D; position: relative; }
+  .ticket::before { content: ""; position: absolute; top: -6px; left: 0; right: 0; height: 6px; background-image: radial-gradient(circle at 6px 0px, transparent 5px, #F5F3EA 5px); background-size: 14px 6px; background-repeat: repeat-x; }
+  .ticket.symptom { background: #F3E4E1; }
+  .ticket.symptom::before { background-image: radial-gradient(circle at 6px 0px, transparent 5px, #F3E4E1 5px); }
+  .ticket.pending { opacity: 0.72; }
+  .ticket-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .stamp { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; padding: 2px 9px 1px; border: 2px solid currentColor; border-radius: 2px; transform: rotate(-2deg); }
+  .stamp.Breakfast { color: #8A6A0B; border-color: #E7AF12; }
+  .stamp.Lunch { color: #2F6B2E; border-color: #4F9B4E; }
+  .stamp.Dinner { color: #A03332; }
+  .stamp.Snack { color: #1F6666; border-color: #2F8B8B; }
+  .stamp.Other { color: #4E5860; border-color: #77828B; }
+  .stamp.FeltOff { color: #FDF7F6; background: #A03332; border-color: #A03332; }
+  .time { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px; color: #77828B; margin-left: auto; }
+  .pend-tag { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: #8A6A0B; border: 1px solid #E7AF12; border-radius: 2px; padding: 1px 5px; }
+  .ticket-text { font-family: 'IBM Plex Mono', monospace; font-size: 14.5px; line-height: 1.5; overflow-wrap: anywhere; }
+  .sev-scale { display: flex; gap: 4px; margin-top: 8px; align-items: center; }
+  .sev-box { width: 14px; height: 14px; border: 2px solid #D3B4AE; border-radius: 2px; background: transparent; }
+  .sev-box.fill { background: #A03332; border-color: #A03332; }
+  .sev-word { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #A98782; margin-left: 6px; }
+  .void-btn { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; background: transparent; border: 1px solid #C9C4B5; color: #A8A395; padding: 4px 8px; border-radius: 2px; cursor: pointer; margin-top: 10px; }
+  .void-btn:hover { border-color: #A03332; color: #A03332; }
+  .void-btn:focus-visible { outline: 3px solid #A03332; outline-offset: 2px; }
+  .empty { margin-top: 40px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 1px; color: #77828B; line-height: 1.6; }
+
+  /* Setup / settings modal */
+  .modal-back { display: none; position: fixed; inset: 0; background: rgba(15,19,22,0.82); z-index: 50; padding: 20px; overflow: auto; }
+  .modal-back.on { display: flex; align-items: flex-start; justify-content: center; }
+  .modal { background: #F5F3EA; color: #23211C; max-width: 460px; width: 100%; margin-top: 40px; padding: 22px; border-radius: 3px; box-shadow: 0 6px 0 #14191D; }
+  .modal h2 { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 24px; letter-spacing: 2px; text-transform: uppercase; color: #23211C; }
+  .modal p.note { font-size: 13px; color: #6B6658; margin-top: 8px; line-height: 1.5; }
+  .modal label { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #77828B; margin: 18px 0 5px; }
+  .modal input { width: 100%; box-sizing: border-box; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #23211C; background: #FBF9F2; border: 2px solid #B8B3A4; border-radius: 2px; padding: 9px 10px; }
+  .modal input:focus { outline: none; border-color: #23211C; }
+  .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-btns button { flex: 1; font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; border: none; padding: 11px; border-radius: 2px; cursor: pointer; }
+  .btn-primary { background: #23211C; color: #F5F3EA; }
+  .btn-ghost { background: transparent; color: #77828B; border: 2px solid #B8B3A4 !important; }
+  .modal-msg { margin-top: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; min-height: 16px; }
+  .modal-msg.ok { color: #2F6B2E; } .modal-msg.err { color: #A03332; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  @media (max-width: 420px) { .brand { font-size: 28px; } .meal-btn { padding: 6px 9px; font-size: 13px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="head-top">
+      <div>
+        <div class="brand">The Ticket <span>Rail</span></div>
+        <div class="tagline">Log meals &amp; symptoms &mdash; find the pattern</div>
+      </div>
+      <button class="gear" id="gearBtn" type="button" aria-label="Settings">&#9881;</button>
+    </div>
+
+    <button class="sync" id="syncPill" type="button" aria-label="Sync status; tap to sync now">
+      <span class="dot"></span><span id="syncText">Starting&hellip;</span>
+    </button>
+
+    <div class="tabs" role="tablist" aria-label="Entry type">
+      <button class="tab on" id="tabMeal" type="button" role="tab" aria-selected="true">Meal</button>
+      <button class="tab tab-symptom" id="tabSymptom" type="button" role="tab" aria-selected="false">Feeling off</button>
+    </div>
+
+    <div class="writer" id="mealWriter">
+      <div class="writer-label">New meal ticket</div>
+      <input type="text" id="foodInput" placeholder="e.g. two eggs over easy, rye toast" maxlength="300" aria-label="What did you eat?">
+      <div class="meal-row" role="group" aria-label="Meal type">
+        <button class="meal-btn on" data-meal="Breakfast" type="button">Breakfast</button>
+        <button class="meal-btn" data-meal="Lunch" type="button">Lunch</button>
+        <button class="meal-btn" data-meal="Dinner" type="button">Dinner</button>
+        <button class="meal-btn" data-meal="Snack" type="button">Snack</button>
+        <button class="meal-btn" data-meal="Other" type="button">Other</button>
+      </div>
+      <div class="add-row"><button class="add-btn" id="addMealBtn" type="button">Add</button></div>
+      <div class="status" id="mealStatus" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="writer symptom-writer" id="symptomWriter">
+      <div class="writer-label">Feeling-off ticket</div>
+      <input type="text" id="symptomInput" placeholder="e.g. bloated and headachy, low energy" maxlength="300" aria-label="Describe how you feel">
+      <div class="field-label">Severity</div>
+      <div class="sev-row" role="group" aria-label="Severity 1 to 5">
+        <button class="sev-btn" data-sev="1" type="button">1 &middot; Mild</button>
+        <button class="sev-btn" data-sev="2" type="button">2</button>
+        <button class="sev-btn on" data-sev="3" type="button">3 &middot; Moderate</button>
+        <button class="sev-btn" data-sev="4" type="button">4</button>
+        <button class="sev-btn" data-sev="5" type="button">5 &middot; Severe</button>
+      </div>
+      <div class="field-label">When it started</div>
+      <div class="time-row">
+        <input type="datetime-local" id="symptomTime" aria-label="When the symptom started">
+        <button class="now-btn" id="nowBtn" type="button">Now</button>
+      </div>
+      <div class="add-row"><button class="add-btn" id="addSymptomBtn" type="button">Add</button></div>
+      <div class="status" id="symptomStatus" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="review-bar">
+      <h2>Chef's Review</h2>
+      <button class="review-btn" id="reviewBtn" type="button">Analyze</button>
+    </div>
+    <div class="review-panel" id="reviewPanel" aria-live="polite"></div>
+    <div class="status" id="reviewStatus" role="status" aria-live="polite"></div>
+  </div>
+</header>
+
+<main class="wrap" id="log" aria-label="Log entries"></main>
+
+<!-- Setup / settings -->
+<div class="modal-back" id="modalBack">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle">Connect your rail</h2>
+    <p class="note">Paste the web app URL and token from your Apps Script deployment. They're stored only on this device and never leave it except to reach your own backend.</p>
+    <label for="cfgUrl">Web app /exec URL</label>
+    <input type="text" id="cfgUrl" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <label for="cfgToken">APP_TOKEN (blank if you didn't set one)</label>
+    <input type="text" id="cfgToken" placeholder="your shared token" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="modal-btns">
+      <button class="btn-ghost" id="cfgCancel" type="button">Cancel</button>
+      <button class="btn-primary" id="cfgSave" type="button">Test &amp; save</button>
+    </div>
+    <div class="modal-msg" id="cfgMsg"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var CFG_KEY = 'ticketrail.cfg';
+  var CACHE_KEY = 'ticketrail.cache';
+  var VALID_MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Other'];
+  var SEV_WORDS = { 1: 'Mild', 2: 'Mild-moderate', 3: 'Moderate', 4: 'Strong', 5: 'Severe' };
+
+  var cfg = null;          // { url, token }
+  var server = [];         // entries confirmed on the Sheet: {kind,id,ts,text,meal?,severity?}
+  var outbox = [];         // pending ops: {op:'append',kind,tempId,entry} | {op:'delete',id}
+  var selectedMeal = 'Breakfast';
+  var selectedSev = 3;
+  var syncing = false;
+
+  // ---- element refs
+  var $ = function (id) { return document.getElementById(id); };
+  var logEl = $('log'), syncPill = $('syncPill'), syncText = $('syncText');
+  var foodInput = $('foodInput'), symptomInput = $('symptomInput'), symptomTime = $('symptomTime');
+  var mealStatus = $('mealStatus'), symptomStatus = $('symptomStatus'), reviewStatus = $('reviewStatus');
+  var reviewBtn = $('reviewBtn'), reviewPanel = $('reviewPanel');
+  var mealBtns = [].slice.call(document.querySelectorAll('.meal-btn'));
+  var sevBtns = [].slice.call(document.querySelectorAll('.sev-btn'));
+
+  function flash(el, msg, ms) {
+    el.textContent = msg || '';
+    if (msg) setTimeout(function () { if (el.textContent === msg) el.textContent = ''; }, ms || 4000);
+  }
+
+  // ---- persistence (localStorage; the Sheet is the real backup)
+  function loadLocal() {
+    try { cfg = JSON.parse(localStorage.getItem(CFG_KEY)) || null; } catch (e) { cfg = null; }
+    try {
+      var c = JSON.parse(localStorage.getItem(CACHE_KEY));
+      if (c) { server = c.server || []; outbox = c.outbox || []; }
+    } catch (e) { server = []; outbox = []; }
+  }
+  function saveCache() {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ server: server, outbox: outbox })); } catch (e) {}
+  }
+  function saveCfg() {
+    try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {}
+  }
+
+  // ---- network (text/plain body => no CORS preflight)
+  function post(payload) {
+    return fetch(cfg.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ token: cfg.token || '' }, payload))
+    }).then(function (r) { return r.json(); });
+  }
+
+  // ---- time helpers
+  function dayKey(ts) { var d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+  function dayLabel(ts) {
+    var d = new Date(ts), today = new Date();
+    var yest = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+    if (dayKey(ts) === dayKey(today.getTime())) return 'Today';
+    if (dayKey(ts) === dayKey(yest.getTime())) return 'Yesterday';
+    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function timeLabel(ts) { return new Date(ts).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
+  function toLocalInputValue(dt) {
+    var d = dt || new Date(), p = function (n) { return String(n).padStart(2, '0'); };
+    return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  // ---- derive the render list from server + outbox
+  function viewEntries() {
+    var pendingDeletes = {};
+    outbox.forEach(function (op) { if (op.op === 'delete') pendingDeletes[op.id] = true; });
+    var list = server.filter(function (e) { return !pendingDeletes[e.id]; }).map(function (e) {
+      return Object.assign({ pending: false }, e);
+    });
+    outbox.forEach(function (op) {
+      if (op.op === 'append') {
+        list.push(Object.assign({ id: op.tempId, pending: true, kind: op.kind }, op.entry));
+      }
+    });
+    return list;
+  }
+
+  // ---- rendering (user text only via textContent)
+  function render() {
+    logEl.textContent = '';
+    var all = viewEntries();
+    if (all.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = cfg ? 'No tickets on the rail. Log your first meal above.'
+                              : 'Connect your rail from the gear icon to begin.';
+      logEl.appendChild(empty);
+      return;
+    }
+    all.sort(function (a, b) { return b.ts - a.ts; });
+
+    var groups = [], byKey = {};
+    all.forEach(function (e) {
+      var k = dayKey(e.ts);
+      if (!byKey[k]) { byKey[k] = { ts: e.ts, items: [] }; groups.push(byKey[k]); }
+      byKey[k].items.push(e);
+    });
+
+    groups.forEach(function (g) {
+      var day = document.createElement('section'); day.className = 'day';
+      var rail = document.createElement('div'); rail.className = 'rail';
+      var h2 = document.createElement('h2'); h2.textContent = dayLabel(g.ts);
+      var count = document.createElement('span'); count.className = 'count';
+      count.textContent = g.items.length + (g.items.length === 1 ? ' ticket' : ' tickets');
+      rail.appendChild(h2); rail.appendChild(count); day.appendChild(rail);
+
+      var list = document.createElement('ul'); list.className = 'tickets';
+      g.items.forEach(function (e) {
+        var li = document.createElement('li');
+        li.className = 'ticket' + (e.kind === 'symptom' ? ' symptom' : '') + (e.pending ? ' pending' : '');
+
+        var top = document.createElement('div'); top.className = 'ticket-top';
+        var stamp = document.createElement('span');
+        if (e.kind === 'meal') { stamp.className = 'stamp ' + e.meal; stamp.textContent = e.meal; }
+        else { stamp.className = 'stamp FeltOff'; stamp.textContent = 'Felt off'; }
+        top.appendChild(stamp);
+
+        if (e.pending) {
+          var pt = document.createElement('span'); pt.className = 'pend-tag'; pt.textContent = 'Syncing';
+          top.appendChild(pt);
+        }
+        var time = document.createElement('span'); time.className = 'time'; time.textContent = timeLabel(e.ts);
+        top.appendChild(time);
+        li.appendChild(top);
+
+        var text = document.createElement('p'); text.className = 'ticket-text'; text.textContent = e.text;
+        li.appendChild(text);
+
+        if (e.kind === 'symptom') {
+          var scale = document.createElement('div'); scale.className = 'sev-scale';
+          scale.setAttribute('aria-label', 'Severity ' + e.severity + ' of 5');
+          for (var i = 1; i <= 5; i++) {
+            var box = document.createElement('span'); box.className = 'sev-box' + (i <= e.severity ? ' fill' : '');
+            scale.appendChild(box);
+          }
+          var word = document.createElement('span'); word.className = 'sev-word';
+          word.textContent = SEV_WORDS[e.severity] || ('Level ' + e.severity);
+          scale.appendChild(word); li.appendChild(scale);
+        }
+
+        var voidBtn = document.createElement('button');
+        voidBtn.type = 'button'; voidBtn.className = 'void-btn'; voidBtn.textContent = 'Void';
+        voidBtn.setAttribute('aria-label', 'Delete entry: ' + e.text);
+        voidBtn.addEventListener('click', function () { deleteEntry(e); });
+        li.appendChild(voidBtn);
+        list.appendChild(li);
+      });
+      day.appendChild(list); logEl.appendChild(day);
+    });
+  }
+
+  // ---- sync status pill
+  function setSync(state, text) {
+    syncPill.className = 'sync ' + state;
+    syncText.textContent = text;
+  }
+  function refreshSyncPill() {
+    if (!cfg) { setSync('error', 'Not connected'); return; }
+    if (syncing) { setSync('syncing', 'Syncing\u2026'); return; }
+    if (!navigator.onLine) { setSync('offline', pendingCount() ? ('Offline \u00b7 ' + pendingCount() + ' pending') : 'Offline'); return; }
+    if (pendingCount()) { setSync('pending', pendingCount() + ' pending'); return; }
+    setSync('synced', 'Synced');
+  }
+  function pendingCount() { return outbox.length; }
+
+  // ---- add / delete
+  function addMeal() {
+    var text = foodInput.value.trim();
+    if (!text) { flash(mealStatus, 'Write what you ate first.'); foodInput.focus(); return; }
+    if (VALID_MEALS.indexOf(selectedMeal) === -1) selectedMeal = 'Other';
+    outbox.push({ op: 'append', kind: 'meal', tempId: 'tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2,7),
+      entry: { text: text, meal: selectedMeal, ts: Date.now() } });
+    foodInput.value = ''; saveCache(); render(); refreshSyncPill(); foodInput.focus();
+    flush();
+  }
+  function addSymptom() {
+    var text = symptomInput.value.trim();
+    if (!text) { flash(symptomStatus, 'Describe how you feel first.'); symptomInput.focus(); return; }
+    var ts = Date.now();
+    if (symptomTime.value) { var p = new Date(symptomTime.value).getTime(); if (!isNaN(p)) ts = p; }
+    outbox.push({ op: 'append', kind: 'symptom', tempId: 'tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2,7),
+      entry: { text: text, severity: selectedSev, ts: ts } });
+    symptomInput.value = ''; symptomTime.value = toLocalInputValue();
+    saveCache(); render(); refreshSyncPill(); symptomInput.focus();
+    flush();
+  }
+  function deleteEntry(e) {
+    if (e.pending) {
+      // still in the outbox, never hit the server — just drop the queued append
+      outbox = outbox.filter(function (op) { return !(op.op === 'append' && op.tempId === e.id); });
+    } else {
+      // queue a delete for the server; hide immediately
+      outbox.push({ op: 'delete', id: e.id });
+    }
+    saveCache(); render(); refreshSyncPill(); flush();
+  }
+
+  // ---- flush outbox, then refresh from server
+  function flush() {
+    if (!cfg || syncing) return Promise.resolve();
+    if (!navigator.onLine) { refreshSyncPill(); return Promise.resolve(); }
+    if (!outbox.length) return refresh();
+    syncing = true; refreshSyncPill();
+
+    var queue = outbox.slice();
+    var i = 0;
+    function step() {
+      if (i >= queue.length) {
+        syncing = false;
+        return refresh();
+      }
+      var op = queue[i];
+      var call = (op.op === 'append')
+        ? post({ action: 'append', kind: op.kind, entry: op.entry })
+        : post({ action: 'delete', id: op.id });
+      return call.then(function (res) {
+        if (res && res.ok) {
+          // remove this op from the live outbox
+          outbox = outbox.filter(function (o) { return o !== op; });
+          if (op.op === 'delete') server = server.filter(function (s) { return s.id !== op.id; });
+          saveCache();
+        }
+        // if !ok (e.g. 'not found'), drop it too so it doesn't wedge the queue
+        else if (res && res.error === 'not found') {
+          outbox = outbox.filter(function (o) { return o !== op; }); saveCache();
+        }
+        i++; return step();
+      }).catch(function () {
+        // network error: stop, keep remaining ops for next time
+        syncing = false; refreshSyncPill(); render();
+        throw new Error('offline');
+      });
+    }
+    return step().catch(function () { /* handled */ });
+  }
+
+  function refresh() {
+    if (!cfg || !navigator.onLine) { refreshSyncPill(); return Promise.resolve(); }
+    return post({ action: 'list' }).then(function (res) {
+      if (res && res.ok) {
+        server = normalize(res);
+        saveCache();
+      }
+      syncing = false; render(); refreshSyncPill();
+    }).catch(function () { syncing = false; refreshSyncPill(); });
+  }
+
+  function normalize(res) {
+    var out = [];
+    (res.meals || []).forEach(function (m) { out.push({ kind: 'meal', id: m.id, ts: Number(m.ts), text: m.text, meal: m.meal }); });
+    (res.symptoms || []).forEach(function (s) { out.push({ kind: 'symptom', id: s.id, ts: Number(s.ts), text: s.text, severity: Number(s.severity) }); });
+    return out;
+  }
+
+  // ---- Chef's review
+  function renderReview(report) {
+    reviewPanel.textContent = '';
+    var h1 = document.createElement('h3'); h1.textContent = 'What the log shows';
+    var summary = document.createElement('p'); summary.textContent = String(report.summary || 'No summary returned.');
+    reviewPanel.appendChild(h1); reviewPanel.appendChild(summary);
+
+    if (Array.isArray(report.suspects) && report.suspects.length) {
+      var h2 = document.createElement('h3'); h2.textContent = 'Possible suspects'; reviewPanel.appendChild(h2);
+      report.suspects.forEach(function (s) {
+        var card = document.createElement('div'); card.className = 'suspect';
+        var head = document.createElement('div'); head.className = 'suspect-head';
+        var name = document.createElement('span'); name.className = 'suspect-name'; name.textContent = String(s.name || 'Unnamed');
+        var lvl = ['low','medium','high'].indexOf(String(s.confidence)) >= 0 ? String(s.confidence) : 'low';
+        var conf = document.createElement('span'); conf.className = 'conf ' + lvl; conf.textContent = lvl + ' confidence';
+        head.appendChild(name); head.appendChild(conf);
+        var ev = document.createElement('p'); ev.className = 'suspect-evidence'; ev.textContent = String(s.evidence || '');
+        card.appendChild(head); card.appendChild(ev); reviewPanel.appendChild(card);
+      });
+    }
+    if (report.timing_notes) {
+      var h3 = document.createElement('h3'); h3.textContent = 'Timing patterns';
+      var tp = document.createElement('p'); tp.textContent = String(report.timing_notes);
+      reviewPanel.appendChild(h3); reviewPanel.appendChild(tp);
+    }
+    if (Array.isArray(report.next_steps) && report.next_steps.length) {
+      var h4 = document.createElement('h3'); h4.textContent = 'Worth trying';
+      var ul = document.createElement('ul');
+      report.next_steps.forEach(function (step) { var li = document.createElement('li'); li.textContent = String(step); ul.appendChild(li); });
+      reviewPanel.appendChild(h4); reviewPanel.appendChild(ul);
+    }
+    var disc = document.createElement('p'); disc.className = 'disclaimer';
+    disc.textContent = 'These are correlations in your own log, not a medical diagnosis. For persistent, severe, or worsening symptoms, talk to a doctor.';
+    reviewPanel.appendChild(disc);
+    reviewPanel.style.display = 'block';
+  }
+
+  reviewBtn.addEventListener('click', function () {
+    if (!cfg) { flash(reviewStatus, 'Connect your rail first (gear icon).'); return; }
+    if (!navigator.onLine) { flash(reviewStatus, 'The review needs a connection.'); return; }
+    reviewBtn.disabled = true; reviewBtn.textContent = 'Reviewing\u2026';
+    // make sure pending writes land before we analyze
+    flush().then(function () {
+      return post({ action: 'review' });
+    }).then(function (res) {
+      if (res && res.ok && res.report) { renderReview(res.report); flash(reviewStatus, ''); }
+      else { flash(reviewStatus, (res && res.error) ? ('Review: ' + res.error) : 'Review failed — try again.'); }
+    }).catch(function () {
+      flash(reviewStatus, 'Review failed — check your connection.');
+    }).finally(function () {
+      reviewBtn.disabled = false; reviewBtn.textContent = 'Analyze';
+    });
+  });
+
+  // ---- tabs
+  var tabMeal = $('tabMeal'), tabSymptom = $('tabSymptom'), mealWriter = $('mealWriter'), symptomWriter = $('symptomWriter');
+  function showTab(meal) {
+    tabMeal.classList.toggle('on', meal); tabSymptom.classList.toggle('on', !meal);
+    tabMeal.setAttribute('aria-selected', String(meal)); tabSymptom.setAttribute('aria-selected', String(!meal));
+    mealWriter.style.display = meal ? 'block' : 'none';
+    symptomWriter.style.display = meal ? 'none' : 'block';
+    if (!meal && !symptomTime.value) symptomTime.value = toLocalInputValue();
+  }
+  tabMeal.addEventListener('click', function () { showTab(true); });
+  tabSymptom.addEventListener('click', function () { showTab(false); });
+
+  mealBtns.forEach(function (b) { b.addEventListener('click', function () {
+    selectedMeal = b.getAttribute('data-meal'); mealBtns.forEach(function (x) { x.classList.toggle('on', x === b); });
+  }); });
+  sevBtns.forEach(function (b) { b.addEventListener('click', function () {
+    selectedSev = parseInt(b.getAttribute('data-sev'), 10); sevBtns.forEach(function (x) { x.classList.toggle('on', x === b); });
+  }); });
+  $('nowBtn').addEventListener('click', function () { symptomTime.value = toLocalInputValue(); });
+  $('addMealBtn').addEventListener('click', addMeal);
+  $('addSymptomBtn').addEventListener('click', addSymptom);
+  foodInput.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') addMeal(); });
+  symptomInput.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') addSymptom(); });
+  syncPill.addEventListener('click', function () { flush(); });
+
+  // ---- setup / settings modal
+  var modalBack = $('modalBack'), cfgUrl = $('cfgUrl'), cfgToken = $('cfgToken'), cfgMsg = $('cfgMsg');
+  function openModal() {
+    if (cfg) { cfgUrl.value = cfg.url || ''; cfgToken.value = cfg.token || ''; }
+    cfgMsg.textContent = ''; cfgMsg.className = 'modal-msg';
+    modalBack.classList.add('on');
+  }
+  function closeModal() { modalBack.classList.remove('on'); }
+  $('gearBtn').addEventListener('click', openModal);
+  $('cfgCancel').addEventListener('click', function () { if (cfg) closeModal(); });
+  modalBack.addEventListener('click', function (ev) { if (ev.target === modalBack && cfg) closeModal(); });
+
+  $('cfgSave').addEventListener('click', function () {
+    var url = cfgUrl.value.trim(), token = cfgToken.value.trim();
+    if (!url) { cfgMsg.className = 'modal-msg err'; cfgMsg.textContent = 'Paste your /exec URL first.'; return; }
+    cfgMsg.className = 'modal-msg'; cfgMsg.textContent = 'Testing connection\u2026';
+    var trial = { url: url, token: token };
+    fetch(trial.url, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ token: trial.token, action: 'list' })
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      if (res && res.ok) {
+        cfg = trial; saveCfg();
+        cfgMsg.className = 'modal-msg ok'; cfgMsg.textContent = 'Connected. Loading your log\u2026';
+        server = normalize(res); saveCache();
+        setTimeout(function () { closeModal(); render(); refreshSyncPill(); flush(); }, 500);
+      } else if (res && res.error === 'unauthorized') {
+        cfgMsg.className = 'modal-msg err'; cfgMsg.textContent = 'Token rejected — check it matches APP_TOKEN.';
+      } else {
+        cfgMsg.className = 'modal-msg err'; cfgMsg.textContent = (res && res.error) ? res.error : 'Unexpected response.';
+      }
+    }).catch(function () {
+      cfgMsg.className = 'modal-msg err';
+      cfgMsg.textContent = 'Could not reach it. Check the URL, and that the deployment is set to "Anyone".';
+    });
+  });
+
+  // ---- online/offline events
+  window.addEventListener('online', function () { flush(); });
+  window.addEventListener('offline', function () { refreshSyncPill(); });
+
+  // ---- boot
+  symptomTime.value = toLocalInputValue();
+  loadLocal();
+  render();
+  refreshSyncPill();
+  if (!cfg) { openModal(); }
+  else { flush(); }
+
+  // ---- register service worker (enables offline app load once hosted)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./service-worker.js').catch(function () {});
+    });
+  }
+})();
+</script>
+</body>
+</html>

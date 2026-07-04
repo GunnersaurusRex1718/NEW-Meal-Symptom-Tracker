@@ -16,114 +16,71 @@
 <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;800&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #20282E; color: #DCE3E8;
-    font-family: 'IBM Plex Sans', -apple-system, sans-serif;
-    min-height: 100vh; padding-bottom: 64px;
-    padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
-  }
+  body { background: #20282E; color: #DCE3E8; font-family: 'IBM Plex Sans', -apple-system, sans-serif; min-height: 100vh; padding-bottom: 64px; padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
   .wrap { max-width: 620px; margin: 0 auto; padding: 0 16px; }
 
-  /* Header */
-  header {
-    background: linear-gradient(180deg, #2A343B 0%, #232C32 100%);
-    border-bottom: 3px solid #37424A;
-    padding: calc(22px + env(safe-area-inset-top)) 0 18px;
-  }
+  header { background: linear-gradient(180deg, #2A343B 0%, #232C32 100%); border-bottom: 3px solid #37424A; padding: calc(22px + env(safe-area-inset-top)) 0 18px; }
   .head-top { display: flex; align-items: flex-start; gap: 12px; }
-  .brand {
-    font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 34px;
-    letter-spacing: 3px; text-transform: uppercase; color: #F5F3EA; line-height: 1;
-  }
+  .brand { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 34px; letter-spacing: 3px; text-transform: uppercase; color: #F5F3EA; line-height: 1; }
   .brand span { color: #E7AF12; }
-  .tagline {
-    font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px;
-    text-transform: uppercase; color: #77828B; margin-top: 6px;
-  }
-  .gear {
-    margin-left: auto; background: transparent; border: none; color: #77828B;
-    font-size: 22px; cursor: pointer; padding: 2px 6px; line-height: 1;
-  }
+  .tagline { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #77828B; margin-top: 6px; }
+  .gear { margin-left: auto; background: transparent; border: none; color: #77828B; font-size: 22px; cursor: pointer; padding: 2px 6px; line-height: 1; }
   .gear:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
 
-  /* Sync status pill */
-  .sync {
-    display: inline-flex; align-items: center; gap: 6px; margin-top: 12px;
-    font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px;
-    text-transform: uppercase; padding: 4px 10px; border-radius: 20px;
-    border: 1px solid #37424A; color: #9AA6AE; cursor: pointer;
-  }
+  .sync { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; border: 1px solid #37424A; color: #9AA6AE; cursor: pointer; }
   .sync .dot { width: 8px; height: 8px; border-radius: 50%; background: #77828B; flex: none; }
-  .sync.synced .dot { background: #4F9B4E; }
-  .sync.syncing .dot { background: #E7AF12; }
-  .sync.pending .dot { background: #E7AF12; }
-  .sync.offline .dot { background: #A03332; }
-  .sync.error .dot { background: #A03332; }
+  .sync.synced .dot { background: #4F9B4E; } .sync.syncing .dot { background: #E7AF12; }
+  .sync.pending .dot { background: #E7AF12; } .sync.offline .dot { background: #A03332; } .sync.error .dot { background: #A03332; }
 
-  /* Tabs */
   .tabs { display: flex; gap: 6px; margin-top: 16px; }
-  .tab {
-    font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 15px;
-    letter-spacing: 2px; text-transform: uppercase; padding: 8px 18px 6px; border: none;
-    border-radius: 3px 3px 0 0; cursor: pointer; background: #2E383F; color: #77828B;
-  }
+  .tab { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; padding: 8px 18px 6px; border: none; border-radius: 3px 3px 0 0; cursor: pointer; background: #2E383F; color: #77828B; }
   .tab.on { background: #F5F3EA; color: #23211C; }
   .tab.on.tab-symptom { background: #F3E4E1; color: #A03332; }
   .tab:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
 
-  /* Writers */
   .writer { background: #F5F3EA; color: #23211C; padding: 14px 14px 16px; border-radius: 0 3px 2px 2px; box-shadow: 0 3px 0 #14191D; }
   .writer.symptom-writer { background: #F3E4E1; display: none; }
   .writer-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #77828B; margin-bottom: 8px; }
   .symptom-writer .writer-label { color: #A98782; }
-  .writer input[type="text"] {
-    width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #23211C;
-    background: transparent; border: none; border-bottom: 2px dashed #B8B3A4; padding: 6px 2px 8px; outline: none;
-  }
+  .food-row { display: flex; gap: 8px; align-items: flex-end; }
+  .food-row input[type="text"] { flex: 1; min-width: 0; }
+  .writer input[type="text"] { width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #23211C; background: transparent; border: none; border-bottom: 2px dashed #B8B3A4; padding: 6px 2px 8px; outline: none; }
   .writer input[type="text"]:focus { border-bottom-color: #23211C; }
   .writer input[type="text"]::placeholder { color: #A8A395; }
   .symptom-writer input[type="text"] { border-bottom-color: #D3B4AE; }
-  .field-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #A98782; margin: 14px 0 6px; }
+  .scan-btn { flex: none; font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; background: #2E383F; color: #F5F3EA; border: none; padding: 8px 12px; border-radius: 2px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .scan-btn svg { width: 15px; height: 15px; fill: #E7AF12; }
+  .scan-btn:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
+  .field-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #77828B; margin: 14px 0 6px; }
+  .symptom-writer .field-label { color: #A98782; }
 
-  .meal-row, .sev-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-  .sev-row { margin-top: 0; }
-  .meal-btn, .sev-btn {
-    font-family: 'Saira Condensed', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: 1.5px;
-    text-transform: uppercase; background: transparent; border: 2px solid #B8B3A4; color: #77828B;
-    padding: 6px 12px; border-radius: 2px; cursor: pointer;
-  }
+  .meal-row, .sev-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .meal-btn, .sev-btn { font-family: 'Saira Condensed', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; background: transparent; border: 2px solid #B8B3A4; color: #77828B; padding: 6px 12px; border-radius: 2px; cursor: pointer; }
   .meal-btn:focus-visible, .sev-btn:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
   .meal-btn[data-meal="Breakfast"].on { border-color: #E7AF12; color: #8A6A0B; background: #FBF0CE; }
-  .meal-btn[data-meal="Lunch"].on     { border-color: #4F9B4E; color: #2F6B2E; background: #E3F0E2; }
-  .meal-btn[data-meal="Dinner"].on    { border-color: #A03332; color: #A03332; background: #F5E1E0; }
-  .meal-btn[data-meal="Snack"].on     { border-color: #2F8B8B; color: #1F6666; background: #DFF0F0; }
-  .meal-btn[data-meal="Other"].on     { border-color: #77828B; color: #4E5860; background: #E9ECEE; }
+  .meal-btn[data-meal="Lunch"].on { border-color: #4F9B4E; color: #2F6B2E; background: #E3F0E2; }
+  .meal-btn[data-meal="Dinner"].on { border-color: #A03332; color: #A03332; background: #F5E1E0; }
+  .meal-btn[data-meal="Snack"].on { border-color: #2F8B8B; color: #1F6666; background: #DFF0F0; }
+  .meal-btn[data-meal="Other"].on { border-color: #77828B; color: #4E5860; background: #E9ECEE; }
   .sev-btn { border-color: #D3B4AE; color: #A98782; }
   .sev-btn.on { border-color: #A03332; color: #FDF7F6; background: #A03332; }
 
   .time-row { display: flex; gap: 8px; align-items: center; }
-  .time-row input[type="datetime-local"] {
-    font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #23211C; background: #FBF3F1;
-    border: 2px solid #D3B4AE; border-radius: 2px; padding: 6px 8px; flex: 1; min-width: 0;
-  }
-  .now-btn {
-    font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
-    background: transparent; border: 2px solid #D3B4AE; color: #A98782; padding: 7px 10px; border-radius: 2px; cursor: pointer;
-  }
-  .now-btn:hover { border-color: #A03332; color: #A03332; }
+  .time-row input[type="datetime-local"] { font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #23211C; background: #FBF9F2; border: 2px solid #B8B3A4; border-radius: 2px; padding: 6px 8px; flex: 1; min-width: 0; }
+  .symptom-writer .time-row input[type="datetime-local"] { background: #FBF3F1; border-color: #D3B4AE; }
+  .now-btn { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; background: transparent; border: 2px solid #B8B3A4; color: #77828B; padding: 7px 10px; border-radius: 2px; cursor: pointer; }
+  .now-btn:hover { border-color: #23211C; color: #23211C; }
+  .symptom-writer .now-btn { border-color: #D3B4AE; color: #A98782; }
+  .symptom-writer .now-btn:hover { border-color: #A03332; color: #A03332; }
 
   .add-row { display: flex; justify-content: flex-end; margin-top: 14px; }
-  .add-btn {
-    font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 17px; letter-spacing: 2.5px;
-    text-transform: uppercase; background: #23211C; color: #F5F3EA; border: none; padding: 10px 26px;
-    border-radius: 2px; cursor: pointer; box-shadow: 2px 2px 0 #B8B3A4;
-  }
+  .add-btn { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 17px; letter-spacing: 2.5px; text-transform: uppercase; background: #23211C; color: #F5F3EA; border: none; padding: 10px 26px; border-radius: 2px; cursor: pointer; box-shadow: 2px 2px 0 #B8B3A4; }
   .symptom-writer .add-btn { background: #A03332; box-shadow: 2px 2px 0 #D3B4AE; }
   .add-btn:active { transform: translate(1px, 1px); }
   .add-btn:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
   .status { margin-top: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #A03332; min-height: 16px; }
+  .status.info { color: #2F6B2E; }
 
-  /* Chef's review */
   .review-bar { display: flex; align-items: center; gap: 12px; margin-top: 26px; background: linear-gradient(180deg,#414D56 0%,#37424A 55%,#2E383F 100%); border-radius: 3px; padding: 10px 14px; box-shadow: 0 2px 0 #14191D; }
   .review-bar h2 { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 19px; letter-spacing: 2.5px; text-transform: uppercase; color: #F5F3EA; }
   .review-btn { margin-left: auto; font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; background: #E7AF12; color: #23211C; border: none; padding: 9px 18px; border-radius: 2px; cursor: pointer; box-shadow: 0 2px 0 #14191D; }
@@ -142,7 +99,6 @@
   .suspect-evidence { margin-top: 6px; color: #4E5860; }
   .disclaimer { margin-top: 16px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.5; color: #77828B; border-top: 2px dashed #B8B3A4; padding-top: 10px; }
 
-  /* Day rails + tickets */
   .day { margin-top: 30px; }
   .rail { display: flex; align-items: center; gap: 12px; background: linear-gradient(180deg,#414D56 0%,#37424A 55%,#2E383F 100%); border-radius: 3px; padding: 8px 14px; box-shadow: 0 2px 0 #14191D; }
   .rail::before, .rail::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5C6A74, #1B2227 75%); flex: none; }
@@ -157,12 +113,9 @@
   .ticket.pending { opacity: 0.72; }
   .ticket-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .stamp { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; padding: 2px 9px 1px; border: 2px solid currentColor; border-radius: 2px; transform: rotate(-2deg); }
-  .stamp.Breakfast { color: #8A6A0B; border-color: #E7AF12; }
-  .stamp.Lunch { color: #2F6B2E; border-color: #4F9B4E; }
-  .stamp.Dinner { color: #A03332; }
-  .stamp.Snack { color: #1F6666; border-color: #2F8B8B; }
-  .stamp.Other { color: #4E5860; border-color: #77828B; }
-  .stamp.FeltOff { color: #FDF7F6; background: #A03332; border-color: #A03332; }
+  .stamp.Breakfast { color: #8A6A0B; border-color: #E7AF12; } .stamp.Lunch { color: #2F6B2E; border-color: #4F9B4E; }
+  .stamp.Dinner { color: #A03332; } .stamp.Snack { color: #1F6666; border-color: #2F8B8B; }
+  .stamp.Other { color: #4E5860; border-color: #77828B; } .stamp.FeltOff { color: #FDF7F6; background: #A03332; border-color: #A03332; }
   .time { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px; color: #77828B; margin-left: auto; }
   .pend-tag { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: #8A6A0B; border: 1px solid #E7AF12; border-radius: 2px; padding: 1px 5px; }
   .ticket-text { font-family: 'IBM Plex Mono', monospace; font-size: 14.5px; line-height: 1.5; overflow-wrap: anywhere; }
@@ -170,19 +123,21 @@
   .sev-box { width: 14px; height: 14px; border: 2px solid #D3B4AE; border-radius: 2px; background: transparent; }
   .sev-box.fill { background: #A03332; border-color: #A03332; }
   .sev-word { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #A98782; margin-left: 6px; }
-  .void-btn { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; background: transparent; border: 1px solid #C9C4B5; color: #A8A395; padding: 4px 8px; border-radius: 2px; cursor: pointer; margin-top: 10px; }
-  .void-btn:hover { border-color: #A03332; color: #A03332; }
-  .void-btn:focus-visible { outline: 3px solid #A03332; outline-offset: 2px; }
+  .ticket-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .mini-btn { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; background: transparent; border: 1px solid #C9C4B5; color: #A8A395; padding: 4px 8px; border-radius: 2px; cursor: pointer; }
+  .mini-btn:hover { border-color: #23211C; color: #23211C; }
+  .mini-btn.void:hover { border-color: #A03332; color: #A03332; }
+  .mini-btn:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
   .empty { margin-top: 40px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 1px; color: #77828B; line-height: 1.6; }
 
-  /* Setup / settings modal */
-  .modal-back { display: none; position: fixed; inset: 0; background: rgba(15,19,22,0.82); z-index: 50; padding: 20px; overflow: auto; }
+  /* Modals */
+  .modal-back { display: none; position: fixed; inset: 0; background: rgba(15,19,22,0.86); z-index: 50; padding: 20px; overflow: auto; }
   .modal-back.on { display: flex; align-items: flex-start; justify-content: center; }
   .modal { background: #F5F3EA; color: #23211C; max-width: 460px; width: 100%; margin-top: 40px; padding: 22px; border-radius: 3px; box-shadow: 0 6px 0 #14191D; }
-  .modal h2 { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 24px; letter-spacing: 2px; text-transform: uppercase; color: #23211C; }
+  .modal h2 { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 24px; letter-spacing: 2px; text-transform: uppercase; }
   .modal p.note { font-size: 13px; color: #6B6658; margin-top: 8px; line-height: 1.5; }
   .modal label { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #77828B; margin: 18px 0 5px; }
-  .modal input { width: 100%; box-sizing: border-box; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #23211C; background: #FBF9F2; border: 2px solid #B8B3A4; border-radius: 2px; padding: 9px 10px; }
+  .modal input[type="text"], .modal input[type="datetime-local"] { width: 100%; box-sizing: border-box; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #23211C; background: #FBF9F2; border: 2px solid #B8B3A4; border-radius: 2px; padding: 9px 10px; }
   .modal input:focus { outline: none; border-color: #23211C; }
   .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
   .modal-btns button { flex: 1; font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; border: none; padding: 11px; border-radius: 2px; cursor: pointer; }
@@ -190,6 +145,16 @@
   .btn-ghost { background: transparent; color: #77828B; border: 2px solid #B8B3A4 !important; }
   .modal-msg { margin-top: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; min-height: 16px; }
   .modal-msg.ok { color: #2F6B2E; } .modal-msg.err { color: #A03332; }
+
+  /* Scanner */
+  #scanVideo { width: 100%; border-radius: 3px; background: #14191D; aspect-ratio: 4/3; object-fit: cover; }
+  .scan-frame { position: relative; }
+  .scan-reticle { position: absolute; left: 12%; right: 12%; top: 34%; height: 32%; border: 3px solid rgba(231,175,18,0.9); border-radius: 6px; box-shadow: 0 0 0 2000px rgba(20,25,29,0.35); pointer-events: none; }
+  .scan-status { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #6B6658; margin-top: 12px; text-align: center; min-height: 16px; }
+  .scan-choice { display: none; margin-top: 14px; }
+  .scan-choice.on { display: block; }
+  .scan-upc { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 16px; text-align: center; letter-spacing: 1px; }
+  .scan-manual { margin-top: 16px; border-top: 2px dashed #B8B3A4; padding-top: 14px; }
 
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
   @media (max-width: 420px) { .brand { font-size: 28px; } .meal-btn { padding: 6px 9px; font-size: 13px; } }
@@ -216,9 +181,17 @@
       <button class="tab tab-symptom" id="tabSymptom" type="button" role="tab" aria-selected="false">Feeling off</button>
     </div>
 
+    <!-- Meal writer -->
     <div class="writer" id="mealWriter">
       <div class="writer-label">New meal ticket</div>
-      <input type="text" id="foodInput" placeholder="e.g. two eggs over easy, rye toast" maxlength="300" aria-label="What did you eat?">
+      <div class="food-row">
+        <input type="text" id="foodInput" placeholder="e.g. two eggs over easy, rye toast" maxlength="300" aria-label="What did you eat?">
+        <button class="scan-btn" id="scanBtn" type="button" aria-label="Scan a UPC barcode">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h2v16H2V4zm3 0h1v16H5V4zm2 0h2v16H7V4zm3 0h1v16h-1V4zm3 0h2v16h-2V4zm3 0h1v16h-1V4zm2 0h3v16h-3V4z"/></svg>
+          Scan
+        </button>
+      </div>
+      <div class="field-label">Meal type</div>
       <div class="meal-row" role="group" aria-label="Meal type">
         <button class="meal-btn on" data-meal="Breakfast" type="button">Breakfast</button>
         <button class="meal-btn" data-meal="Lunch" type="button">Lunch</button>
@@ -226,10 +199,16 @@
         <button class="meal-btn" data-meal="Snack" type="button">Snack</button>
         <button class="meal-btn" data-meal="Other" type="button">Other</button>
       </div>
+      <div class="field-label">When you ate</div>
+      <div class="time-row">
+        <input type="datetime-local" id="mealTime" aria-label="When you ate">
+        <button class="now-btn" id="mealNowBtn" type="button">Now</button>
+      </div>
       <div class="add-row"><button class="add-btn" id="addMealBtn" type="button">Add</button></div>
       <div class="status" id="mealStatus" role="status" aria-live="polite"></div>
     </div>
 
+    <!-- Symptom writer -->
     <div class="writer symptom-writer" id="symptomWriter">
       <div class="writer-label">Feeling-off ticket</div>
       <input type="text" id="symptomInput" placeholder="e.g. bloated and headachy, low energy" maxlength="300" aria-label="Describe how you feel">
@@ -244,7 +223,7 @@
       <div class="field-label">When it started</div>
       <div class="time-row">
         <input type="datetime-local" id="symptomTime" aria-label="When the symptom started">
-        <button class="now-btn" id="nowBtn" type="button">Now</button>
+        <button class="now-btn" id="symNowBtn" type="button">Now</button>
       </div>
       <div class="add-row"><button class="add-btn" id="addSymptomBtn" type="button">Add</button></div>
       <div class="status" id="symptomStatus" role="status" aria-live="polite"></div>
@@ -278,6 +257,62 @@
   </div>
 </div>
 
+<!-- Edit entry -->
+<div class="modal-back" id="editBack">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+    <h2 id="editTitle">Edit ticket</h2>
+    <label for="editText">Description</label>
+    <input type="text" id="editText" maxlength="300" autocapitalize="sentences">
+    <div id="editMealWrap">
+      <label>Meal type</label>
+      <div class="meal-row" id="editMealRow" role="group" aria-label="Meal type"></div>
+    </div>
+    <div id="editSevWrap" style="display:none">
+      <label>Severity</label>
+      <div class="sev-row" id="editSevRow" role="group" aria-label="Severity"></div>
+    </div>
+    <label for="editTime">Date &amp; time</label>
+    <input type="datetime-local" id="editTime">
+    <div class="modal-btns">
+      <button class="btn-ghost" id="editCancel" type="button">Cancel</button>
+      <button class="btn-primary" id="editSave" type="button">Save changes</button>
+    </div>
+    <div class="modal-msg" id="editMsg"></div>
+  </div>
+</div>
+
+<!-- Scanner -->
+<div class="modal-back" id="scanBack">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="scanTitle">
+    <h2 id="scanTitle">Scan a UPC</h2>
+    <div class="scan-frame" id="scanFrame">
+      <video id="scanVideo" playsinline muted autoplay></video>
+      <div class="scan-reticle" id="scanReticle"></div>
+    </div>
+    <div class="scan-status" id="scanStatus">Point the rear camera at a barcode&hellip;</div>
+
+    <div class="scan-choice" id="scanChoice">
+      <div class="scan-upc" id="scanUpc"></div>
+      <p class="note" style="text-align:center">Not in your library yet. Look it up, or type it in.</p>
+      <div class="modal-btns">
+        <button class="btn-ghost" id="scanManual" type="button">Enter manually</button>
+        <button class="btn-primary" id="scanOff" type="button">Open Food Facts</button>
+      </div>
+    </div>
+
+    <div class="scan-manual">
+      <label for="scanManualUpc">Or type the UPC digits</label>
+      <input type="text" id="scanManualUpc" inputmode="numeric" placeholder="e.g. 038000138416" autocomplete="off">
+      <div class="modal-btns">
+        <button class="btn-ghost" id="scanClose" type="button">Close</button>
+        <button class="btn-primary" id="scanManualGo" type="button">Look up</button>
+      </div>
+    </div>
+    <div class="modal-msg" id="scanMsg"></div>
+  </div>
+</div>
+
+<script src="./zxing.min.js"></script>
 <script>
 (function () {
   var CFG_KEY = 'ticketrail.cfg';
@@ -285,58 +320,46 @@
   var VALID_MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Other'];
   var SEV_WORDS = { 1: 'Mild', 2: 'Mild-moderate', 3: 'Moderate', 4: 'Strong', 5: 'Severe' };
 
-  var cfg = null;          // { url, token }
-  var server = [];         // entries confirmed on the Sheet: {kind,id,ts,text,meal?,severity?}
-  var outbox = [];         // pending ops: {op:'append',kind,tempId,entry} | {op:'delete',id}
-  var selectedMeal = 'Breakfast';
-  var selectedSev = 3;
-  var syncing = false;
+  var cfg = null, server = [], outbox = [];
+  var selectedMeal = 'Breakfast', selectedSev = 3, syncing = false;
+  var pendingUpc = null, pendingUpcSave = false;  // link a scanned product to the next meal add
 
-  // ---- element refs
   var $ = function (id) { return document.getElementById(id); };
   var logEl = $('log'), syncPill = $('syncPill'), syncText = $('syncText');
-  var foodInput = $('foodInput'), symptomInput = $('symptomInput'), symptomTime = $('symptomTime');
+  var foodInput = $('foodInput'), mealTime = $('mealTime');
+  var symptomInput = $('symptomInput'), symptomTime = $('symptomTime');
   var mealStatus = $('mealStatus'), symptomStatus = $('symptomStatus'), reviewStatus = $('reviewStatus');
   var reviewBtn = $('reviewBtn'), reviewPanel = $('reviewPanel');
-  var mealBtns = [].slice.call(document.querySelectorAll('.meal-btn'));
-  var sevBtns = [].slice.call(document.querySelectorAll('.sev-btn'));
+  var mealBtns = [].slice.call(document.querySelectorAll('#mealWriter .meal-btn'));
+  var sevBtns = [].slice.call(document.querySelectorAll('#symptomWriter .sev-btn'));
 
-  function flash(el, msg, ms) {
-    el.textContent = msg || '';
-    if (msg) setTimeout(function () { if (el.textContent === msg) el.textContent = ''; }, ms || 4000);
+  function flash(el, msg, ms, info) {
+    el.textContent = msg || ''; el.className = 'status' + (info ? ' info' : '');
+    if (msg) setTimeout(function () { if (el.textContent === msg) { el.textContent = ''; el.className = 'status'; } }, ms || 4000);
   }
 
-  // ---- persistence (localStorage; the Sheet is the real backup)
+  // ---- persistence
   function loadLocal() {
     try { cfg = JSON.parse(localStorage.getItem(CFG_KEY)) || null; } catch (e) { cfg = null; }
-    try {
-      var c = JSON.parse(localStorage.getItem(CACHE_KEY));
-      if (c) { server = c.server || []; outbox = c.outbox || []; }
-    } catch (e) { server = []; outbox = []; }
+    try { var c = JSON.parse(localStorage.getItem(CACHE_KEY)); if (c) { server = c.server || []; outbox = c.outbox || []; } }
+    catch (e) { server = []; outbox = []; }
   }
-  function saveCache() {
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ server: server, outbox: outbox })); } catch (e) {}
-  }
-  function saveCfg() {
-    try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {}
-  }
+  function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ server: server, outbox: outbox })); } catch (e) {} }
+  function saveCfg() { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {} }
 
-  // ---- network (text/plain body => no CORS preflight)
   function post(payload) {
     return fetch(cfg.url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(Object.assign({ token: cfg.token || '' }, payload))
     }).then(function (r) { return r.json(); });
   }
 
-  // ---- time helpers
+  // ---- time
   function dayKey(ts) { var d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
   function dayLabel(ts) {
-    var d = new Date(ts), today = new Date();
-    var yest = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
-    if (dayKey(ts) === dayKey(today.getTime())) return 'Today';
-    if (dayKey(ts) === dayKey(yest.getTime())) return 'Yesterday';
+    var d = new Date(ts), t = new Date(), y = new Date(t.getFullYear(), t.getMonth(), t.getDate()-1);
+    if (dayKey(ts) === dayKey(t.getTime())) return 'Today';
+    if (dayKey(ts) === dayKey(y.getTime())) return 'Yesterday';
     return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
   }
   function timeLabel(ts) { return new Date(ts).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
@@ -344,42 +367,37 @@
     var d = dt || new Date(), p = function (n) { return String(n).padStart(2, '0'); };
     return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
+  function tsFromInput(val) { if (!val) return null; var t = new Date(val).getTime(); return isNaN(t) ? null : t; }
 
-  // ---- derive the render list from server + outbox
+  // ---- view model: server + pending ops
   function viewEntries() {
-    var pendingDeletes = {};
-    outbox.forEach(function (op) { if (op.op === 'delete') pendingDeletes[op.id] = true; });
-    var list = server.filter(function (e) { return !pendingDeletes[e.id]; }).map(function (e) {
-      return Object.assign({ pending: false }, e);
+    var deletes = {}, updates = {};
+    outbox.forEach(function (op) {
+      if (op.op === 'delete') deletes[op.id] = true;
+      if (op.op === 'update') updates[op.id] = Object.assign(updates[op.id] || {}, op.patch);
+    });
+    var list = server.filter(function (e) { return !deletes[e.id]; }).map(function (e) {
+      var m = Object.assign({ pending: false }, e);
+      if (updates[e.id]) m = Object.assign(m, updates[e.id]);
+      return m;
     });
     outbox.forEach(function (op) {
-      if (op.op === 'append') {
-        list.push(Object.assign({ id: op.tempId, pending: true, kind: op.kind }, op.entry));
-      }
+      if (op.op === 'append') list.push(Object.assign({ id: op.tempId, pending: true, kind: op.kind }, op.entry));
     });
     return list;
   }
 
-  // ---- rendering (user text only via textContent)
   function render() {
     logEl.textContent = '';
     var all = viewEntries();
     if (all.length === 0) {
-      var empty = document.createElement('div');
-      empty.className = 'empty';
-      empty.textContent = cfg ? 'No tickets on the rail. Log your first meal above.'
-                              : 'Connect your rail from the gear icon to begin.';
-      logEl.appendChild(empty);
-      return;
+      var empty = document.createElement('div'); empty.className = 'empty';
+      empty.textContent = cfg ? 'No tickets on the rail. Log your first meal above.' : 'Connect your rail from the gear icon to begin.';
+      logEl.appendChild(empty); return;
     }
     all.sort(function (a, b) { return b.ts - a.ts; });
-
     var groups = [], byKey = {};
-    all.forEach(function (e) {
-      var k = dayKey(e.ts);
-      if (!byKey[k]) { byKey[k] = { ts: e.ts, items: [] }; groups.push(byKey[k]); }
-      byKey[k].items.push(e);
-    });
+    all.forEach(function (e) { var k = dayKey(e.ts); if (!byKey[k]) { byKey[k] = { ts: e.ts, items: [] }; groups.push(byKey[k]); } byKey[k].items.push(e); });
 
     groups.forEach(function (g) {
       var day = document.createElement('section'); day.className = 'day';
@@ -393,52 +411,41 @@
       g.items.forEach(function (e) {
         var li = document.createElement('li');
         li.className = 'ticket' + (e.kind === 'symptom' ? ' symptom' : '') + (e.pending ? ' pending' : '');
-
         var top = document.createElement('div'); top.className = 'ticket-top';
         var stamp = document.createElement('span');
         if (e.kind === 'meal') { stamp.className = 'stamp ' + e.meal; stamp.textContent = e.meal; }
         else { stamp.className = 'stamp FeltOff'; stamp.textContent = 'Felt off'; }
         top.appendChild(stamp);
-
-        if (e.pending) {
-          var pt = document.createElement('span'); pt.className = 'pend-tag'; pt.textContent = 'Syncing';
-          top.appendChild(pt);
-        }
+        if (e.pending) { var pt = document.createElement('span'); pt.className = 'pend-tag'; pt.textContent = 'Syncing'; top.appendChild(pt); }
         var time = document.createElement('span'); time.className = 'time'; time.textContent = timeLabel(e.ts);
-        top.appendChild(time);
-        li.appendChild(top);
+        top.appendChild(time); li.appendChild(top);
 
-        var text = document.createElement('p'); text.className = 'ticket-text'; text.textContent = e.text;
-        li.appendChild(text);
+        var text = document.createElement('p'); text.className = 'ticket-text'; text.textContent = e.text; li.appendChild(text);
 
         if (e.kind === 'symptom') {
           var scale = document.createElement('div'); scale.className = 'sev-scale';
           scale.setAttribute('aria-label', 'Severity ' + e.severity + ' of 5');
-          for (var i = 1; i <= 5; i++) {
-            var box = document.createElement('span'); box.className = 'sev-box' + (i <= e.severity ? ' fill' : '');
-            scale.appendChild(box);
-          }
-          var word = document.createElement('span'); word.className = 'sev-word';
-          word.textContent = SEV_WORDS[e.severity] || ('Level ' + e.severity);
+          for (var i = 1; i <= 5; i++) { var box = document.createElement('span'); box.className = 'sev-box' + (i <= e.severity ? ' fill' : ''); scale.appendChild(box); }
+          var word = document.createElement('span'); word.className = 'sev-word'; word.textContent = SEV_WORDS[e.severity] || ('Level ' + e.severity);
           scale.appendChild(word); li.appendChild(scale);
         }
 
-        var voidBtn = document.createElement('button');
-        voidBtn.type = 'button'; voidBtn.className = 'void-btn'; voidBtn.textContent = 'Void';
+        var actions = document.createElement('div'); actions.className = 'ticket-actions';
+        var editBtn = document.createElement('button'); editBtn.type = 'button'; editBtn.className = 'mini-btn'; editBtn.textContent = 'Edit';
+        editBtn.addEventListener('click', function () { openEdit(e); });
+        var voidBtn = document.createElement('button'); voidBtn.type = 'button'; voidBtn.className = 'mini-btn void'; voidBtn.textContent = 'Void';
         voidBtn.setAttribute('aria-label', 'Delete entry: ' + e.text);
         voidBtn.addEventListener('click', function () { deleteEntry(e); });
-        li.appendChild(voidBtn);
+        actions.appendChild(editBtn); actions.appendChild(voidBtn); li.appendChild(actions);
         list.appendChild(li);
       });
       day.appendChild(list); logEl.appendChild(day);
     });
   }
 
-  // ---- sync status pill
-  function setSync(state, text) {
-    syncPill.className = 'sync ' + state;
-    syncText.textContent = text;
-  }
+  // ---- sync pill
+  function setSync(state, text) { syncPill.className = 'sync ' + state; syncText.textContent = text; }
+  function pendingCount() { return outbox.length; }
   function refreshSyncPill() {
     if (!cfg) { setSync('error', 'Not connected'); return; }
     if (syncing) { setSync('syncing', 'Syncing\u2026'); return; }
@@ -446,90 +453,130 @@
     if (pendingCount()) { setSync('pending', pendingCount() + ' pending'); return; }
     setSync('synced', 'Synced');
   }
-  function pendingCount() { return outbox.length; }
 
-  // ---- add / delete
+  // ---- add / delete / edit
   function addMeal() {
     var text = foodInput.value.trim();
     if (!text) { flash(mealStatus, 'Write what you ate first.'); foodInput.focus(); return; }
     if (VALID_MEALS.indexOf(selectedMeal) === -1) selectedMeal = 'Other';
+    var ts = tsFromInput(mealTime.value) || Date.now();
     outbox.push({ op: 'append', kind: 'meal', tempId: 'tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2,7),
-      entry: { text: text, meal: selectedMeal, ts: Date.now() } });
-    foodInput.value = ''; saveCache(); render(); refreshSyncPill(); foodInput.focus();
-    flush();
+      entry: { text: text, meal: selectedMeal, ts: ts } });
+    // if this meal came from a scanned/typed UPC we don't yet have saved, remember it
+    if (pendingUpc && pendingUpcSave) {
+      outbox.push({ op: 'product_save', upc: pendingUpc, name: text, meal: selectedMeal });
+    }
+    pendingUpc = null; pendingUpcSave = false;
+    foodInput.value = ''; mealTime.value = toLocalInputValue();
+    saveCache(); render(); refreshSyncPill(); foodInput.focus(); flush();
   }
   function addSymptom() {
     var text = symptomInput.value.trim();
     if (!text) { flash(symptomStatus, 'Describe how you feel first.'); symptomInput.focus(); return; }
-    var ts = Date.now();
-    if (symptomTime.value) { var p = new Date(symptomTime.value).getTime(); if (!isNaN(p)) ts = p; }
+    var ts = tsFromInput(symptomTime.value) || Date.now();
     outbox.push({ op: 'append', kind: 'symptom', tempId: 'tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2,7),
       entry: { text: text, severity: selectedSev, ts: ts } });
     symptomInput.value = ''; symptomTime.value = toLocalInputValue();
-    saveCache(); render(); refreshSyncPill(); symptomInput.focus();
-    flush();
+    saveCache(); render(); refreshSyncPill(); symptomInput.focus(); flush();
   }
   function deleteEntry(e) {
-    if (e.pending) {
-      // still in the outbox, never hit the server — just drop the queued append
-      outbox = outbox.filter(function (op) { return !(op.op === 'append' && op.tempId === e.id); });
-    } else {
-      // queue a delete for the server; hide immediately
-      outbox.push({ op: 'delete', id: e.id });
-    }
+    if (e.pending) { outbox = outbox.filter(function (op) { return !(op.op === 'append' && op.tempId === e.id); }); }
+    else { outbox.push({ op: 'delete', id: e.id }); }
     saveCache(); render(); refreshSyncPill(); flush();
   }
 
-  // ---- flush outbox, then refresh from server
+  // ---- edit modal
+  var editBack = $('editBack'), editText = $('editText'), editTime = $('editTime');
+  var editMealWrap = $('editMealWrap'), editSevWrap = $('editSevWrap');
+  var editMealRow = $('editMealRow'), editSevRow = $('editSevRow'), editMsg = $('editMsg');
+  var editTarget = null, editMeal = null, editSev = null;
+
+  function buildEditControls() {
+    editMealRow.textContent = '';
+    VALID_MEALS.forEach(function (m) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'meal-btn'; b.setAttribute('data-meal', m); b.textContent = m;
+      b.addEventListener('click', function () { editMeal = m; [].slice.call(editMealRow.children).forEach(function (x) { x.classList.toggle('on', x === b); }); });
+      editMealRow.appendChild(b);
+    });
+    editSevRow.textContent = '';
+    [1,2,3,4,5].forEach(function (n) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'sev-btn'; b.setAttribute('data-sev', n);
+      b.textContent = n === 1 ? '1 \u00b7 Mild' : n === 3 ? '3 \u00b7 Mod' : n === 5 ? '5 \u00b7 Sev' : String(n);
+      b.addEventListener('click', function () { editSev = n; [].slice.call(editSevRow.children).forEach(function (x) { x.classList.toggle('on', x === b); }); });
+      editSevRow.appendChild(b);
+    });
+  }
+  function openEdit(e) {
+    editTarget = e; editMsg.textContent = ''; editMsg.className = 'modal-msg';
+    editText.value = e.text; editTime.value = toLocalInputValue(new Date(e.ts));
+    if (e.kind === 'meal') {
+      editMealWrap.style.display = ''; editSevWrap.style.display = 'none'; editMeal = e.meal;
+      [].slice.call(editMealRow.children).forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-meal') === e.meal); });
+    } else {
+      editMealWrap.style.display = 'none'; editSevWrap.style.display = ''; editSev = e.severity;
+      [].slice.call(editSevRow.children).forEach(function (x) { x.classList.toggle('on', Number(x.getAttribute('data-sev')) === e.severity); });
+    }
+    editBack.classList.add('on');
+  }
+  function closeEdit() { editBack.classList.remove('on'); editTarget = null; }
+  function saveEdit() {
+    if (!editTarget) return;
+    var text = editText.value.trim();
+    if (!text) { editMsg.className = 'modal-msg err'; editMsg.textContent = 'Description can\u2019t be empty.'; return; }
+    var ts = tsFromInput(editTime.value) || editTarget.ts;
+    var patch = { text: text, ts: ts };
+    if (editTarget.kind === 'meal') patch.meal = editMeal || editTarget.meal;
+    else patch.severity = editSev || editTarget.severity;
+
+    if (editTarget.pending) {
+      // still queued as an append — edit that queued entry in place
+      outbox.forEach(function (op) {
+        if (op.op === 'append' && op.tempId === editTarget.id) { op.entry = Object.assign(op.entry, patch); }
+      });
+    } else {
+      outbox.push({ op: 'update', id: editTarget.id, patch: patch });
+    }
+    saveCache(); render(); refreshSyncPill(); closeEdit(); flush();
+  }
+  buildEditControls();
+  $('editCancel').addEventListener('click', closeEdit);
+  $('editSave').addEventListener('click', saveEdit);
+  editBack.addEventListener('click', function (ev) { if (ev.target === editBack) closeEdit(); });
+
+  // ---- flush + refresh
   function flush() {
     if (!cfg || syncing) return Promise.resolve();
     if (!navigator.onLine) { refreshSyncPill(); return Promise.resolve(); }
     if (!outbox.length) return refresh();
     syncing = true; refreshSyncPill();
-
-    var queue = outbox.slice();
-    var i = 0;
+    var queue = outbox.slice(), i = 0;
     function step() {
-      if (i >= queue.length) {
-        syncing = false;
-        return refresh();
-      }
+      if (i >= queue.length) { syncing = false; return refresh(); }
       var op = queue[i];
-      var call = (op.op === 'append')
-        ? post({ action: 'append', kind: op.kind, entry: op.entry })
-        : post({ action: 'delete', id: op.id });
+      var call;
+      if (op.op === 'append') call = post({ action: 'append', kind: op.kind, entry: op.entry });
+      else if (op.op === 'delete') call = post({ action: 'delete', id: op.id });
+      else if (op.op === 'update') call = post({ action: 'update', id: op.id, patch: op.patch });
+      else if (op.op === 'product_save') call = post({ action: 'product_save', upc: op.upc, name: op.name, meal: op.meal });
+      else call = Promise.resolve({ ok: true });
       return call.then(function (res) {
-        if (res && res.ok) {
-          // remove this op from the live outbox
+        if (res && (res.ok || res.error === 'not found')) {
           outbox = outbox.filter(function (o) { return o !== op; });
-          if (op.op === 'delete') server = server.filter(function (s) { return s.id !== op.id; });
+          if (op.op === 'delete' && res.ok) server = server.filter(function (s) { return s.id !== op.id; });
           saveCache();
         }
-        // if !ok (e.g. 'not found'), drop it too so it doesn't wedge the queue
-        else if (res && res.error === 'not found') {
-          outbox = outbox.filter(function (o) { return o !== op; }); saveCache();
-        }
         i++; return step();
-      }).catch(function () {
-        // network error: stop, keep remaining ops for next time
-        syncing = false; refreshSyncPill(); render();
-        throw new Error('offline');
-      });
+      }).catch(function () { syncing = false; refreshSyncPill(); render(); throw new Error('offline'); });
     }
-    return step().catch(function () { /* handled */ });
+    return step().catch(function () {});
   }
-
   function refresh() {
     if (!cfg || !navigator.onLine) { refreshSyncPill(); return Promise.resolve(); }
     return post({ action: 'list' }).then(function (res) {
-      if (res && res.ok) {
-        server = normalize(res);
-        saveCache();
-      }
+      if (res && res.ok) { server = normalize(res); saveCache(); }
       syncing = false; render(); refreshSyncPill();
     }).catch(function () { syncing = false; refreshSyncPill(); });
   }
-
   function normalize(res) {
     var out = [];
     (res.meals || []).forEach(function (m) { out.push({ kind: 'meal', id: m.id, ts: Number(m.ts), text: m.text, meal: m.meal }); });
@@ -537,13 +584,136 @@
     return out;
   }
 
-  // ---- Chef's review
+  // ================= UPC SCANNER =================
+  var scanBack = $('scanBack'), scanVideo = $('scanVideo'), scanStatus = $('scanStatus');
+  var scanChoice = $('scanChoice'), scanUpcEl = $('scanUpc'), scanMsg = $('scanMsg');
+  var scanManualUpc = $('scanManualUpc');
+  var zxReader = null, currentUpc = null;
+
+  function scanSetStatus(msg) { scanStatus.textContent = msg || ''; }
+  function scanSetMsg(msg, err) { scanMsg.textContent = msg || ''; scanMsg.className = 'modal-msg' + (err ? ' err' : (msg ? ' ok' : '')); }
+
+  function openScanner() {
+    scanChoice.classList.remove('on'); scanSetMsg(''); scanManualUpc.value = ''; currentUpc = null;
+    scanBack.classList.add('on');
+    startCamera();
+  }
+  function closeScanner() { stopCamera(); scanBack.classList.remove('on'); }
+
+  function cameraErrText(e) {
+    var n = (e && e.name) || '';
+    if (n === 'NotAllowedError') return 'Camera permission denied. You can type the UPC below instead.';
+    if (n === 'NotFoundError') return 'No camera found. Type the UPC below instead.';
+    if (n === 'NotReadableError') return 'Camera is busy in another app. Type the UPC below instead.';
+    return 'Camera unavailable here — type the UPC below instead.';
+  }
+
+  function startCamera() {
+    if (!window.ZXing || !ZXing.BrowserMultiFormatReader) { scanSetStatus(''); scanSetMsg('Scanner library not loaded.', true); return; }
+    try {
+      var hints = new Map();
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+        ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E
+      ]);
+      zxReader = new ZXing.BrowserMultiFormatReader(hints);
+      scanSetStatus('Point the rear camera at a barcode\u2026');
+      zxReader.decodeFromConstraints({ video: { facingMode: { ideal: 'environment' } } }, scanVideo, function (result, err) {
+        if (result) {
+          var txt = result.getText();
+          stopCamera();
+          onUpc(txt);
+        }
+        // NotFoundException on empty frames is normal; ignore
+      }).catch(function (e) { scanSetStatus(''); scanSetMsg(cameraErrText(e), true); });
+    } catch (e) { scanSetStatus(''); scanSetMsg(cameraErrText(e), true); }
+  }
+  function stopCamera() { if (zxReader) { try { zxReader.reset(); } catch (e) {} zxReader = null; } }
+
+  // The lookup cascade: our sheet -> prompt (OFF or manual) -> manual fallback
+  function onUpc(upc) {
+    upc = String(upc || '').replace(/\D/g, '');
+    if (!upc) { scanSetMsg('Could not read a valid UPC. Try again or type it in.', true); startCamera(); return; }
+    currentUpc = upc;
+    scanSetStatus('Read ' + upc + ' — checking your library\u2026');
+    if (!cfg) { scanSetMsg('Connect your rail first (gear icon).', true); return; }
+    if (!navigator.onLine) { promptChoice(upc, true); return; }
+    post({ action: 'product_lookup', upc: upc }).then(function (res) {
+      if (res && res.ok && res.found && res.product) {
+        fillFromProduct(upc, res.product.name, res.product.meal, false);
+        scanSetMsg('Loaded from your library.', false);
+        setTimeout(closeScanner, 700);
+      } else {
+        promptChoice(upc, false);
+      }
+    }).catch(function () { promptChoice(upc, true); });
+  }
+
+  function promptChoice(upc, offline) {
+    scanSetStatus('');
+    scanUpcEl.textContent = 'UPC ' + upc;
+    scanChoice.classList.add('on');
+    if (offline) scanSetMsg('Offline — enter it manually and it\u2019ll sync later.', false);
+  }
+
+  function fillFromProduct(upc, name, meal, needsSave) {
+    pendingUpc = upc; pendingUpcSave = !!needsSave;
+    foodInput.value = name || '';
+    if (meal && VALID_MEALS.indexOf(meal) >= 0) {
+      selectedMeal = meal;
+      mealBtns.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-meal') === meal); });
+    }
+    showTab(true);
+    foodInput.focus();
+  }
+
+  function lookupOFF(upc) {
+    var url = 'https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(upc) + '.json?fields=product_name,brands,quantity';
+    return fetch(url).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && (d.status === 1 || d.status === '1') && d.product) {
+        var p = d.product, name = String(p.product_name || '').trim();
+        if (p.brands) { var b = String(p.brands).split(',')[0].trim(); if (b && name.toLowerCase().indexOf(b.toLowerCase()) === -1) name = (b + ' ' + name).trim(); }
+        if (p.quantity) name = (name + ' (' + String(p.quantity).trim() + ')').trim();
+        return name || null;
+      }
+      return null;
+    }).catch(function () { return null; });
+  }
+
+  $('scanBtn').addEventListener('click', openScanner);
+  $('scanClose').addEventListener('click', closeScanner);
+  scanBack.addEventListener('click', function (ev) { if (ev.target === scanBack) closeScanner(); });
+  $('scanManual').addEventListener('click', function () {
+    // manual entry: user will type the description; save under this UPC on add
+    fillFromProduct(currentUpc, '', selectedMeal, true);
+    closeScanner();
+    flash(mealStatus, 'New item — type what it is, then Add. I\u2019ll remember it for next time.', 6000, true);
+  });
+  $('scanOff').addEventListener('click', function () {
+    if (!currentUpc) return;
+    if (!navigator.onLine) { scanSetMsg('Open Food Facts needs a connection.', true); return; }
+    scanSetMsg('Checking Open Food Facts\u2026', false);
+    lookupOFF(currentUpc).then(function (name) {
+      if (name) {
+        fillFromProduct(currentUpc, name, selectedMeal, true);   // save to your library on add
+        closeScanner();
+        flash(mealStatus, 'Found: ' + name + '. Adjust if needed, then Add.', 6000, true);
+      } else {
+        scanSetMsg('Not in Open Food Facts. Enter it manually below.', true);
+      }
+    });
+  });
+  $('scanManualGo').addEventListener('click', function () {
+    var v = scanManualUpc.value.replace(/\D/g, '');
+    if (!v) { scanSetMsg('Type the UPC digits first.', true); return; }
+    stopCamera(); onUpc(v);
+  });
+
+  // ================= Chef's review =================
   function renderReview(report) {
     reviewPanel.textContent = '';
     var h1 = document.createElement('h3'); h1.textContent = 'What the log shows';
     var summary = document.createElement('p'); summary.textContent = String(report.summary || 'No summary returned.');
     reviewPanel.appendChild(h1); reviewPanel.appendChild(summary);
-
     if (Array.isArray(report.suspects) && report.suspects.length) {
       var h2 = document.createElement('h3'); h2.textContent = 'Possible suspects'; reviewPanel.appendChild(h2);
       report.suspects.forEach(function (s) {
@@ -570,106 +740,76 @@
     }
     var disc = document.createElement('p'); disc.className = 'disclaimer';
     disc.textContent = 'These are correlations in your own log, not a medical diagnosis. For persistent, severe, or worsening symptoms, talk to a doctor.';
-    reviewPanel.appendChild(disc);
-    reviewPanel.style.display = 'block';
+    reviewPanel.appendChild(disc); reviewPanel.style.display = 'block';
   }
-
   reviewBtn.addEventListener('click', function () {
     if (!cfg) { flash(reviewStatus, 'Connect your rail first (gear icon).'); return; }
     if (!navigator.onLine) { flash(reviewStatus, 'The review needs a connection.'); return; }
     reviewBtn.disabled = true; reviewBtn.textContent = 'Reviewing\u2026';
-    // make sure pending writes land before we analyze
-    flush().then(function () {
-      return post({ action: 'review' });
-    }).then(function (res) {
+    flush().then(function () { return post({ action: 'review' }); }).then(function (res) {
       if (res && res.ok && res.report) { renderReview(res.report); flash(reviewStatus, ''); }
       else { flash(reviewStatus, (res && res.error) ? ('Review: ' + res.error) : 'Review failed — try again.'); }
-    }).catch(function () {
-      flash(reviewStatus, 'Review failed — check your connection.');
-    }).finally(function () {
-      reviewBtn.disabled = false; reviewBtn.textContent = 'Analyze';
-    });
+    }).catch(function () { flash(reviewStatus, 'Review failed — check your connection.'); })
+      .finally(function () { reviewBtn.disabled = false; reviewBtn.textContent = 'Analyze'; });
   });
 
-  // ---- tabs
+  // ================= tabs / inputs =================
   var tabMeal = $('tabMeal'), tabSymptom = $('tabSymptom'), mealWriter = $('mealWriter'), symptomWriter = $('symptomWriter');
   function showTab(meal) {
     tabMeal.classList.toggle('on', meal); tabSymptom.classList.toggle('on', !meal);
     tabMeal.setAttribute('aria-selected', String(meal)); tabSymptom.setAttribute('aria-selected', String(!meal));
     mealWriter.style.display = meal ? 'block' : 'none';
     symptomWriter.style.display = meal ? 'none' : 'block';
+    if (meal && !mealTime.value) mealTime.value = toLocalInputValue();
     if (!meal && !symptomTime.value) symptomTime.value = toLocalInputValue();
   }
   tabMeal.addEventListener('click', function () { showTab(true); });
   tabSymptom.addEventListener('click', function () { showTab(false); });
-
-  mealBtns.forEach(function (b) { b.addEventListener('click', function () {
-    selectedMeal = b.getAttribute('data-meal'); mealBtns.forEach(function (x) { x.classList.toggle('on', x === b); });
-  }); });
-  sevBtns.forEach(function (b) { b.addEventListener('click', function () {
-    selectedSev = parseInt(b.getAttribute('data-sev'), 10); sevBtns.forEach(function (x) { x.classList.toggle('on', x === b); });
-  }); });
-  $('nowBtn').addEventListener('click', function () { symptomTime.value = toLocalInputValue(); });
+  mealBtns.forEach(function (b) { b.addEventListener('click', function () { selectedMeal = b.getAttribute('data-meal'); mealBtns.forEach(function (x) { x.classList.toggle('on', x === b); }); }); });
+  sevBtns.forEach(function (b) { b.addEventListener('click', function () { selectedSev = parseInt(b.getAttribute('data-sev'), 10); sevBtns.forEach(function (x) { x.classList.toggle('on', x === b); }); }); });
+  $('mealNowBtn').addEventListener('click', function () { mealTime.value = toLocalInputValue(); });
+  $('symNowBtn').addEventListener('click', function () { symptomTime.value = toLocalInputValue(); });
   $('addMealBtn').addEventListener('click', addMeal);
   $('addSymptomBtn').addEventListener('click', addSymptom);
   foodInput.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') addMeal(); });
   symptomInput.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') addSymptom(); });
   syncPill.addEventListener('click', function () { flush(); });
 
-  // ---- setup / settings modal
+  // ================= settings modal =================
   var modalBack = $('modalBack'), cfgUrl = $('cfgUrl'), cfgToken = $('cfgToken'), cfgMsg = $('cfgMsg');
-  function openModal() {
-    if (cfg) { cfgUrl.value = cfg.url || ''; cfgToken.value = cfg.token || ''; }
-    cfgMsg.textContent = ''; cfgMsg.className = 'modal-msg';
-    modalBack.classList.add('on');
-  }
+  function openModal() { if (cfg) { cfgUrl.value = cfg.url || ''; cfgToken.value = cfg.token || ''; } cfgMsg.textContent = ''; cfgMsg.className = 'modal-msg'; modalBack.classList.add('on'); }
   function closeModal() { modalBack.classList.remove('on'); }
   $('gearBtn').addEventListener('click', openModal);
   $('cfgCancel').addEventListener('click', function () { if (cfg) closeModal(); });
   modalBack.addEventListener('click', function (ev) { if (ev.target === modalBack && cfg) closeModal(); });
-
   $('cfgSave').addEventListener('click', function () {
     var url = cfgUrl.value.trim(), token = cfgToken.value.trim();
     if (!url) { cfgMsg.className = 'modal-msg err'; cfgMsg.textContent = 'Paste your /exec URL first.'; return; }
     cfgMsg.className = 'modal-msg'; cfgMsg.textContent = 'Testing connection\u2026';
     var trial = { url: url, token: token };
-    fetch(trial.url, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ token: trial.token, action: 'list' })
-    }).then(function (r) { return r.json(); }).then(function (res) {
-      if (res && res.ok) {
-        cfg = trial; saveCfg();
-        cfgMsg.className = 'modal-msg ok'; cfgMsg.textContent = 'Connected. Loading your log\u2026';
-        server = normalize(res); saveCache();
-        setTimeout(function () { closeModal(); render(); refreshSyncPill(); flush(); }, 500);
-      } else if (res && res.error === 'unauthorized') {
-        cfgMsg.className = 'modal-msg err'; cfgMsg.textContent = 'Token rejected — check it matches APP_TOKEN.';
-      } else {
-        cfgMsg.className = 'modal-msg err'; cfgMsg.textContent = (res && res.error) ? res.error : 'Unexpected response.';
-      }
-    }).catch(function () {
-      cfgMsg.className = 'modal-msg err';
-      cfgMsg.textContent = 'Could not reach it. Check the URL, and that the deployment is set to "Anyone".';
-    });
+    fetch(trial.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ token: trial.token, action: 'list' }) })
+      .then(function (r) { return r.json(); }).then(function (res) {
+        if (res && res.ok) {
+          cfg = trial; saveCfg(); server = normalize(res); saveCache();
+          cfgMsg.className = 'modal-msg ok'; cfgMsg.textContent = 'Connected. Loading your log\u2026';
+          setTimeout(function () { closeModal(); render(); refreshSyncPill(); flush(); }, 500);
+        } else if (res && res.error === 'unauthorized') {
+          cfgMsg.className = 'modal-msg err'; cfgMsg.textContent = 'Token rejected — check it matches APP_TOKEN.';
+        } else { cfgMsg.className = 'modal-msg err'; cfgMsg.textContent = (res && res.error) ? res.error : 'Unexpected response.'; }
+      }).catch(function () { cfgMsg.className = 'modal-msg err'; cfgMsg.textContent = 'Could not reach it. Check the URL, and that the deployment is set to "Anyone".'; });
   });
 
-  // ---- online/offline events
   window.addEventListener('online', function () { flush(); });
   window.addEventListener('offline', function () { refreshSyncPill(); });
 
-  // ---- boot
+  // ================= boot =================
+  mealTime.value = toLocalInputValue();
   symptomTime.value = toLocalInputValue();
-  loadLocal();
-  render();
-  refreshSyncPill();
-  if (!cfg) { openModal(); }
-  else { flush(); }
+  loadLocal(); render(); refreshSyncPill();
+  if (!cfg) openModal(); else flush();
 
-  // ---- register service worker (enables offline app load once hosted)
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () {
-      navigator.serviceWorker.register('./service-worker.js').catch(function () {});
-    });
+    window.addEventListener('load', function () { navigator.serviceWorker.register('./service-worker.js').catch(function () {}); });
   }
 })();
 </script>

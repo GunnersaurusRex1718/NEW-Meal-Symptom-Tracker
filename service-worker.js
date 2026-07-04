@@ -1,13 +1,14 @@
-/* The Ticket Rail — service worker
-   Caches the app shell so the app opens with no connection. Data itself lives in
-   localStorage (instant) and syncs to your Google Sheet when online, so the app is
-   fully usable offline for logging; only the AI review needs a live connection. */
+/* The Ticket Rail — service worker (v2)
+   Caches the app shell (now including the ZXing scanner library) so the app opens
+   and scans offline. Data lives in localStorage and syncs to your Google Sheet when
+   online. Only the AI review and Open Food Facts lookups need a live connection. */
 
-const CACHE = 'ticketrail-v1';
+const CACHE = 'ticketrail-v2';
 const SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './zxing.min.js',
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png'
@@ -28,14 +29,14 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
 
-  // Never cache the Apps Script backend or the Anthropic API — always go to network.
+  // Never cache the backend, the Anthropic API, or Open Food Facts — always network.
   if (req.url.includes('script.google.com') ||
       req.url.includes('googleusercontent.com') ||
-      req.url.includes('api.anthropic.com')) {
-    return; // default network handling
+      req.url.includes('api.anthropic.com') ||
+      req.url.includes('openfoodfacts.org')) {
+    return;
   }
 
-  // App shell: cache-first, fall back to network, update cache in background.
   if (req.method === 'GET') {
     event.respondWith(
       caches.match(req).then((cached) => {

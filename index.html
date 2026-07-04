@@ -588,13 +588,15 @@
   var scanBack = $('scanBack'), scanVideo = $('scanVideo'), scanStatus = $('scanStatus');
   var scanChoice = $('scanChoice'), scanUpcEl = $('scanUpc'), scanMsg = $('scanMsg');
   var scanManualUpc = $('scanManualUpc');
-  var zxReader = null, currentUpc = null;
+  var zxReader = null, currentUpc = null, scanHandled = false, lastRead = null;
 
   function scanSetStatus(msg) { scanStatus.textContent = msg || ''; }
   function scanSetMsg(msg, err) { scanMsg.textContent = msg || ''; scanMsg.className = 'modal-msg' + (err ? ' err' : (msg ? ' ok' : '')); }
+  function validUpcLen(s) { return s.length >= 8 && s.length <= 14; }
 
   function openScanner() {
-    scanChoice.classList.remove('on'); scanSetMsg(''); scanManualUpc.value = ''; currentUpc = null;
+    scanChoice.classList.remove('on'); scanSetMsg(''); scanManualUpc.value = '';
+    currentUpc = null; scanHandled = false; lastRead = null;
     scanBack.classList.add('on');
     startCamera();
   }
@@ -610,20 +612,28 @@
 
   function startCamera() {
     if (!window.ZXing || !ZXing.BrowserMultiFormatReader) { scanSetStatus(''); scanSetMsg('Scanner library not loaded.', true); return; }
+    scanHandled = false; lastRead = null;
     try {
       var hints = new Map();
       hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
         ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E
       ]);
+      hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
       zxReader = new ZXing.BrowserMultiFormatReader(hints);
       scanSetStatus('Point the rear camera at a barcode\u2026');
       zxReader.decodeFromConstraints({ video: { facingMode: { ideal: 'environment' } } }, scanVideo, function (result, err) {
-        if (result) {
-          var txt = result.getText();
-          stopCamera();
-          onUpc(txt);
+        // Ignore empty frames and anything after we've already accepted a read.
+        if (!result || scanHandled) return;
+        var digits = String(result.getText() || '').replace(/\D/g, '');
+        if (!validUpcLen(digits)) return;                 // implausible length => reject frame
+        if (digits !== lastRead) {                        // require the SAME value twice in a row
+          lastRead = digits;
+          scanSetStatus('Reading\u2026 hold steady');
+          return;
         }
-        // NotFoundException on empty frames is normal; ignore
+        scanHandled = true;                               // lock: no later frame can override this
+        stopCamera();
+        onUpc(digits);
       }).catch(function (e) { scanSetStatus(''); scanSetMsg(cameraErrText(e), true); });
     } catch (e) { scanSetStatus(''); scanSetMsg(cameraErrText(e), true); }
   }
@@ -632,8 +642,8 @@
   // The lookup cascade: our sheet -> prompt (OFF or manual) -> manual fallback
   function onUpc(upc) {
     upc = String(upc || '').replace(/\D/g, '');
-    if (!upc) { scanSetMsg('Could not read a valid UPC. Try again or type it in.', true); startCamera(); return; }
-    currentUpc = upc;
+    if (!validUpcLen(upc)) { scanSetMsg('That didn\u2019t look like a valid UPC (' + upc.length + ' digits). Try again or type it in.', true); return; }
+    currentUpc = upc;   // the one confirmed value; every branch below saves THIS number
     scanSetStatus('Read ' + upc + ' — checking your library\u2026');
     if (!cfg) { scanSetMsg('Connect your rail first (gear icon).', true); return; }
     if (!navigator.onLine) { promptChoice(upc, true); return; }
@@ -666,46 +676,63 @@
     foodInput.focus();
   }
 
+  // Returns {found:true,name} | {found:false} | {error:'busy'|'network'}.
+  // "busy" = OFF is rate-limiting / high-traffic (429/503 or an HTML error page), which is
+  // NOT the same as the product being absent — the UI must not treat it as "not found".
   function lookupOFF(upc) {
     var url = 'https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(upc) + '.json?fields=product_name,brands,quantity';
-    return fetch(url).then(function (r) { return r.json(); }).then(function (d) {
+    return fetch(url).then(function (r) {
+      if (r.status === 429 || r.status === 503 || r.status === 502 || r.status === 504) throw { kind: 'busy' };
+      return r.text();
+    }).then(function (t) {
+      var d;
+      try { d = JSON.parse(t); } catch (e) { throw { kind: 'busy' }; }   // HTML error page => busy
       if (d && (d.status === 1 || d.status === '1') && d.product) {
         var p = d.product, name = String(p.product_name || '').trim();
         if (p.brands) { var b = String(p.brands).split(',')[0].trim(); if (b && name.toLowerCase().indexOf(b.toLowerCase()) === -1) name = (b + ' ' + name).trim(); }
         if (p.quantity) name = (name + ' (' + String(p.quantity).trim() + ')').trim();
-        return name || null;
+        return { found: true, name: name || null };
       }
-      return null;
-    }).catch(function () { return null; });
+      return { found: false };
+    }).catch(function (e) { return { error: (e && e.kind) || 'network' }; });
   }
 
   $('scanBtn').addEventListener('click', openScanner);
   $('scanClose').addEventListener('click', closeScanner);
   scanBack.addEventListener('click', function (ev) { if (ev.target === scanBack) closeScanner(); });
   $('scanManual').addEventListener('click', function () {
-    // manual entry: user will type the description; save under this UPC on add
-    fillFromProduct(currentUpc, '', selectedMeal, true);
+    if (!currentUpc) { scanSetMsg('No UPC captured yet — scan or type one first.', true); return; }
+    // manual entry: user will type the description; save under THIS UPC on add
+    var upc = currentUpc;
+    fillFromProduct(upc, '', selectedMeal, true);
     closeScanner();
-    flash(mealStatus, 'New item — type what it is, then Add. I\u2019ll remember it for next time.', 6000, true);
+    flash(mealStatus, 'New item under UPC ' + upc + ' — type what it is, then Add. I\u2019ll remember it next time.', 8000, true);
   });
   $('scanOff').addEventListener('click', function () {
-    if (!currentUpc) return;
+    if (!currentUpc) { scanSetMsg('No UPC captured yet.', true); return; }
     if (!navigator.onLine) { scanSetMsg('Open Food Facts needs a connection.', true); return; }
+    var upc = currentUpc;
     scanSetMsg('Checking Open Food Facts\u2026', false);
-    lookupOFF(currentUpc).then(function (name) {
-      if (name) {
-        fillFromProduct(currentUpc, name, selectedMeal, true);   // save to your library on add
+    lookupOFF(upc).then(function (r) {
+      if (r.error) {
+        scanSetMsg(r.error === 'busy'
+          ? 'Open Food Facts is busy right now (high traffic) — try again shortly, or use Enter manually.'
+          : 'Couldn\u2019t reach Open Food Facts — check your connection, or use Enter manually.', true);
+        return;
+      }
+      if (r.found && r.name) {
+        fillFromProduct(upc, r.name, selectedMeal, true);   // save to your library on add
         closeScanner();
-        flash(mealStatus, 'Found: ' + name + '. Adjust if needed, then Add.', 6000, true);
+        flash(mealStatus, 'Found: ' + r.name + ' (UPC ' + upc + '). Adjust if needed, then Add.', 7000, true);
       } else {
-        scanSetMsg('Not in Open Food Facts. Enter it manually below.', true);
+        scanSetMsg('Not found in Open Food Facts. Use Enter manually to type what it is.', true);
       }
     });
   });
   $('scanManualGo').addEventListener('click', function () {
     var v = scanManualUpc.value.replace(/\D/g, '');
-    if (!v) { scanSetMsg('Type the UPC digits first.', true); return; }
-    stopCamera(); onUpc(v);
+    if (!validUpcLen(v)) { scanSetMsg('Type the full UPC digits (8\u201314).', true); return; }
+    scanHandled = true; stopCamera(); onUpc(v);
   });
 
   // ================= Chef's review =================

@@ -119,6 +119,7 @@
   .time { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px; color: #77828B; margin-left: auto; }
   .pend-tag { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: #8A6A0B; border: 1px solid #E7AF12; border-radius: 2px; padding: 1px 5px; }
   .ticket-text { font-family: 'IBM Plex Mono', monospace; font-size: 14.5px; line-height: 1.5; overflow-wrap: anywhere; }
+  .amount-line { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.5px; color: #77828B; margin-top: 5px; display: inline-block; border: 1px solid #C9C4B5; border-radius: 2px; padding: 1px 7px; }
   .sev-scale { display: flex; gap: 4px; margin-top: 8px; align-items: center; }
   .sev-box { width: 14px; height: 14px; border: 2px solid #D3B4AE; border-radius: 2px; background: transparent; }
   .sev-box.fill { background: #A03332; border-color: #A03332; }
@@ -191,6 +192,8 @@
           Scan
         </button>
       </div>
+      <div class="field-label">Amount <span style="text-transform:none;letter-spacing:0;color:#A8A395">(optional)</span></div>
+      <input type="text" id="amountInput" placeholder="e.g. 1 cup, 2 slices, half a plate" maxlength="120" aria-label="How much did you eat?">
       <div class="field-label">Meal type</div>
       <div class="meal-row" role="group" aria-label="Meal type">
         <button class="meal-btn on" data-meal="Breakfast" type="button">Breakfast</button>
@@ -266,6 +269,8 @@
     <div id="editMealWrap">
       <label>Meal type</label>
       <div class="meal-row" id="editMealRow" role="group" aria-label="Meal type"></div>
+      <label for="editAmount">Amount (optional)</label>
+      <input type="text" id="editAmount" maxlength="120" placeholder="e.g. 1 cup, 2 slices">
     </div>
     <div id="editSevWrap" style="display:none">
       <label>Severity</label>
@@ -322,11 +327,11 @@
 
   var cfg = null, server = [], outbox = [];
   var selectedMeal = 'Breakfast', selectedSev = 3, syncing = false;
-  var pendingUpc = null, pendingUpcSave = false;  // link a scanned product to the next meal add
+  var pendingUpc = null, pendingUpcSave = false, pendingBrand = '', pendingIngredients = '';  // link a scanned product to the next meal add
 
   var $ = function (id) { return document.getElementById(id); };
   var logEl = $('log'), syncPill = $('syncPill'), syncText = $('syncText');
-  var foodInput = $('foodInput'), mealTime = $('mealTime');
+  var foodInput = $('foodInput'), mealTime = $('mealTime'), amountInput = $('amountInput');
   var symptomInput = $('symptomInput'), symptomTime = $('symptomTime');
   var mealStatus = $('mealStatus'), symptomStatus = $('symptomStatus'), reviewStatus = $('reviewStatus');
   var reviewBtn = $('reviewBtn'), reviewPanel = $('reviewPanel');
@@ -422,6 +427,10 @@
 
         var text = document.createElement('p'); text.className = 'ticket-text'; text.textContent = e.text; li.appendChild(text);
 
+        if (e.kind === 'meal' && e.amount) {
+          var amt = document.createElement('div'); amt.className = 'amount-line'; amt.textContent = e.amount; li.appendChild(amt);
+        }
+
         if (e.kind === 'symptom') {
           var scale = document.createElement('div'); scale.className = 'sev-scale';
           scale.setAttribute('aria-label', 'Severity ' + e.severity + ' of 5');
@@ -460,14 +469,15 @@
     if (!text) { flash(mealStatus, 'Write what you ate first.'); foodInput.focus(); return; }
     if (VALID_MEALS.indexOf(selectedMeal) === -1) selectedMeal = 'Other';
     var ts = tsFromInput(mealTime.value) || Date.now();
+    var amount = amountInput.value.trim();
     outbox.push({ op: 'append', kind: 'meal', tempId: 'tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2,7),
-      entry: { text: text, meal: selectedMeal, ts: ts } });
+      entry: { text: text, meal: selectedMeal, amount: amount, ts: ts } });
     // if this meal came from a scanned/typed UPC we don't yet have saved, remember it
     if (pendingUpc && pendingUpcSave) {
-      outbox.push({ op: 'product_save', upc: pendingUpc, name: text, meal: selectedMeal });
+      outbox.push({ op: 'product_save', upc: pendingUpc, name: text, meal: selectedMeal, brand: pendingBrand, ingredients: pendingIngredients });
     }
-    pendingUpc = null; pendingUpcSave = false;
-    foodInput.value = ''; mealTime.value = toLocalInputValue();
+    pendingUpc = null; pendingUpcSave = false; pendingBrand = ''; pendingIngredients = '';
+    foodInput.value = ''; amountInput.value = ''; mealTime.value = toLocalInputValue();
     saveCache(); render(); refreshSyncPill(); foodInput.focus(); flush();
   }
   function addSymptom() {
@@ -486,7 +496,7 @@
   }
 
   // ---- edit modal
-  var editBack = $('editBack'), editText = $('editText'), editTime = $('editTime');
+  var editBack = $('editBack'), editText = $('editText'), editTime = $('editTime'), editAmount = $('editAmount');
   var editMealWrap = $('editMealWrap'), editSevWrap = $('editSevWrap');
   var editMealRow = $('editMealRow'), editSevRow = $('editSevRow'), editMsg = $('editMsg');
   var editTarget = null, editMeal = null, editSev = null;
@@ -511,6 +521,7 @@
     editText.value = e.text; editTime.value = toLocalInputValue(new Date(e.ts));
     if (e.kind === 'meal') {
       editMealWrap.style.display = ''; editSevWrap.style.display = 'none'; editMeal = e.meal;
+      editAmount.value = e.amount || '';
       [].slice.call(editMealRow.children).forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-meal') === e.meal); });
     } else {
       editMealWrap.style.display = 'none'; editSevWrap.style.display = ''; editSev = e.severity;
@@ -525,7 +536,7 @@
     if (!text) { editMsg.className = 'modal-msg err'; editMsg.textContent = 'Description can\u2019t be empty.'; return; }
     var ts = tsFromInput(editTime.value) || editTarget.ts;
     var patch = { text: text, ts: ts };
-    if (editTarget.kind === 'meal') patch.meal = editMeal || editTarget.meal;
+    if (editTarget.kind === 'meal') { patch.meal = editMeal || editTarget.meal; patch.amount = editAmount.value.trim(); }
     else patch.severity = editSev || editTarget.severity;
 
     if (editTarget.pending) {
@@ -579,7 +590,7 @@
   }
   function normalize(res) {
     var out = [];
-    (res.meals || []).forEach(function (m) { out.push({ kind: 'meal', id: m.id, ts: Number(m.ts), text: m.text, meal: m.meal }); });
+    (res.meals || []).forEach(function (m) { out.push({ kind: 'meal', id: m.id, ts: Number(m.ts), text: m.text, meal: m.meal, amount: m.amount || '' }); });
     (res.symptoms || []).forEach(function (s) { out.push({ kind: 'symptom', id: s.id, ts: Number(s.ts), text: s.text, severity: Number(s.severity) }); });
     return out;
   }
@@ -665,8 +676,9 @@
     if (offline) scanSetMsg('Offline — enter it manually and it\u2019ll sync later.', false);
   }
 
-  function fillFromProduct(upc, name, meal, needsSave) {
+  function fillFromProduct(upc, name, meal, needsSave, detail) {
     pendingUpc = upc; pendingUpcSave = !!needsSave;
+    pendingBrand = (detail && detail.brand) || ''; pendingIngredients = (detail && detail.ingredients) || '';
     foodInput.value = name || '';
     if (meal && VALID_MEALS.indexOf(meal) >= 0) {
       selectedMeal = meal;
@@ -680,7 +692,7 @@
   // "busy" = OFF is rate-limiting / high-traffic (429/503 or an HTML error page), which is
   // NOT the same as the product being absent — the UI must not treat it as "not found".
   function lookupOFF(upc) {
-    var url = 'https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(upc) + '.json?fields=product_name,brands,quantity';
+    var url = 'https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(upc) + '.json?fields=product_name,brands,quantity,ingredients_text';
     return fetch(url).then(function (r) {
       if (r.status === 429 || r.status === 503 || r.status === 502 || r.status === 504) throw { kind: 'busy' };
       return r.text();
@@ -689,9 +701,11 @@
       try { d = JSON.parse(t); } catch (e) { throw { kind: 'busy' }; }   // HTML error page => busy
       if (d && (d.status === 1 || d.status === '1') && d.product) {
         var p = d.product, name = String(p.product_name || '').trim();
-        if (p.brands) { var b = String(p.brands).split(',')[0].trim(); if (b && name.toLowerCase().indexOf(b.toLowerCase()) === -1) name = (b + ' ' + name).trim(); }
+        var brand = p.brands ? String(p.brands).split(',')[0].trim() : '';
+        if (brand && name.toLowerCase().indexOf(brand.toLowerCase()) === -1) name = (brand + ' ' + name).trim();
         if (p.quantity) name = (name + ' (' + String(p.quantity).trim() + ')').trim();
-        return { found: true, name: name || null };
+        var ingredients = p.ingredients_text ? String(p.ingredients_text).trim().slice(0, 1000) : '';
+        return { found: true, name: name || null, brand: brand, ingredients: ingredients };
       }
       return { found: false };
     }).catch(function (e) { return { error: (e && e.kind) || 'network' }; });
@@ -721,9 +735,10 @@
         return;
       }
       if (r.found && r.name) {
-        fillFromProduct(upc, r.name, selectedMeal, true);   // save to your library on add
+        fillFromProduct(upc, r.name, selectedMeal, true, { brand: r.brand, ingredients: r.ingredients });   // save to your library on add
         closeScanner();
-        flash(mealStatus, 'Found: ' + r.name + ' (UPC ' + upc + '). Adjust if needed, then Add.', 7000, true);
+        var extra = r.ingredients ? ' Ingredients captured.' : '';
+        flash(mealStatus, 'Found: ' + r.name + ' (UPC ' + upc + ').' + extra + ' Adjust if needed, then Add.', 7000, true);
       } else {
         scanSetMsg('Not found in Open Food Facts. Use Enter manually to type what it is.', true);
       }
@@ -776,8 +791,10 @@
     flush().then(function () { return post({ action: 'review' }); }).then(function (res) {
       if (res && res.ok && res.report) { renderReview(res.report); flash(reviewStatus, ''); }
       else {
-        if (res && res.raw) { try { console.warn('Review parse failed. Raw model output:', res.raw); } catch (e) {} }
-        flash(reviewStatus, (res && res.error) ? ('Review: ' + res.error) : 'Review failed — try again.', 6000);
+        try { console.warn('Review failed. Full response:', res); if (res && res.raw) console.warn('Raw model output:', res.raw); } catch (e) {}
+        var extra = '';
+        if (res && res.diag) extra = ' [out ' + res.diag.out + ' tok, stop ' + res.diag.stop + ', build ' + res.diag.build + ']';
+        flash(reviewStatus, (res && res.error ? ('Review: ' + res.error) : 'Review failed — try again.') + extra, 12000);
       }
     }).catch(function () { flash(reviewStatus, 'Review failed — check your connection.'); })
       .finally(function () { reviewBtn.disabled = false; reviewBtn.textContent = 'Analyze'; });

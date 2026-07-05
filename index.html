@@ -257,6 +257,7 @@
       <button class="btn-primary" id="cfgSave" type="button">Test &amp; save</button>
     </div>
     <div class="modal-msg" id="cfgMsg"></div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #B8B3A4;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:#A8A395">App build <span id="feBuild"></span> &middot; backend build shown at your /exec URL</div>
   </div>
 </div>
 
@@ -320,6 +321,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
+  var APP_BUILD = 'fe-v2.6-brand-ingredients';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var VALID_MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Other'];
@@ -893,6 +895,8 @@
   window.addEventListener('offline', function () { refreshSyncPill(); });
 
   // ================= boot =================
+  try { var fb = document.getElementById('feBuild'); if (fb) fb.textContent = APP_BUILD; } catch (e) {}
+  try { console.log('Ticket Rail frontend ' + APP_BUILD); } catch (e) {}
   mealTime.value = toLocalInputValue();
   symptomTime.value = toLocalInputValue();
   loadLocal(); render(); refreshSyncPill();

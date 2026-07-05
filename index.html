@@ -707,14 +707,29 @@
     });
   }
 
-  function lookupOFF(upc) {
-    var url = 'https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(upc) + '.json?fields=product_name,brands,quantity,ingredients_text';
+  // Trader-Joe's-style short/RCN barcodes and UPC-A vs EAN-13 differ only by zero-padding.
+  // OFF often stores the padded form, so on a miss we retry a few normalized variants.
+  function offCandidates(upc) {
+    var d = String(upc).replace(/\D/g, ''), set = [];
+    function add(x) { if (x && set.indexOf(x) === -1) set.push(x); }
+    var stripped = d.replace(/^0+/, '') || d;
+    add(d);
+    add(stripped);
+    add(('00000000' + stripped).slice(-8));         // pad to EAN-8 / RCN width
+    add(('0000000000000' + stripped).slice(-13));   // pad to EAN-13 width
+    if (d.length === 12) add('0' + d);              // UPC-A -> EAN-13
+    if (d.length === 13 && d.charAt(0) === '0') add(d.slice(1)); // EAN-13 -> UPC-A
+    return set.slice(0, 5);
+  }
+
+  function fetchOFF(code) {
+    var url = 'https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(code) + '.json?fields=product_name,brands,quantity,ingredients_text';
     return fetch(url).then(function (r) {
       if (r.status === 429 || r.status === 503 || r.status === 502 || r.status === 504) throw { kind: 'busy' };
       return r.text();
     }).then(function (t) {
       var d;
-      try { d = JSON.parse(t); } catch (e) { throw { kind: 'busy' }; }   // HTML error page => busy
+      try { d = JSON.parse(t); } catch (e) { throw { kind: 'busy' }; }
       if (d && (d.status === 1 || d.status === '1') && d.product) {
         var p = d.product, name = String(p.product_name || '').trim();
         var brand = p.brands ? String(p.brands).split(',')[0].trim() : '';
@@ -724,7 +739,19 @@
         return { found: true, name: name || null, brand: brand, ingredients: ingredients };
       }
       return { found: false };
-    }).catch(function (e) { return { error: (e && e.kind) || 'network' }; });
+    });
+  }
+
+  function lookupOFF(upc) {
+    var cands = offCandidates(upc), i = 0;
+    function next() {
+      if (i >= cands.length) return Promise.resolve({ found: false });
+      return fetchOFF(cands[i]).then(function (r) {
+        if (r.found) { r.matchedCode = cands[i]; return r; }
+        i++; return next();
+      }).catch(function (e) { return { error: (e && e.kind) || 'network' }; });
+    }
+    return next();
   }
 
   $('scanBtn').addEventListener('click', openScanner);

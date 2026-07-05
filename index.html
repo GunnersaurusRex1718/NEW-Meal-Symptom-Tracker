@@ -568,7 +568,7 @@
       if (op.op === 'append') call = post({ action: 'append', kind: op.kind, entry: op.entry });
       else if (op.op === 'delete') call = post({ action: 'delete', id: op.id });
       else if (op.op === 'update') call = post({ action: 'update', id: op.id, patch: op.patch });
-      else if (op.op === 'product_save') call = post({ action: 'product_save', upc: op.upc, name: op.name, meal: op.meal });
+      else if (op.op === 'product_save') call = post({ action: 'product_save', upc: op.upc, name: op.name, meal: op.meal, brand: op.brand, ingredients: op.ingredients });
       else call = Promise.resolve({ ok: true });
       return call.then(function (res) {
         if (res && (res.ok || res.error === 'not found')) {

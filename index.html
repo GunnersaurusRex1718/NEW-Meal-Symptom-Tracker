@@ -662,6 +662,10 @@
       if (res && res.ok && res.found && res.product) {
         fillFromProduct(upc, res.product.name, res.product.meal, false);
         scanSetMsg('Loaded from your library.', false);
+        // Self-heal: if this library entry has no ingredients yet, fetch them in the background.
+        if (!res.product.ingredients && navigator.onLine) {
+          enrichFromOFF(upc, res.product.name, res.product.meal);
+        }
         setTimeout(closeScanner, 700);
       } else {
         promptChoice(upc, false);
@@ -691,6 +695,18 @@
   // Returns {found:true,name} | {found:false} | {error:'busy'|'network'}.
   // "busy" = OFF is rate-limiting / high-traffic (429/503 or an HTML error page), which is
   // NOT the same as the product being absent — the UI must not treat it as "not found".
+  // Background enrichment: pull brand/ingredients from OFF for a library entry that lacks them,
+  // and save the detail back without changing the entry's name or meal.
+  function enrichFromOFF(upc, name, meal) {
+    lookupOFF(upc).then(function (r) {
+      if (r && r.found && (r.ingredients || r.brand)) {
+        outbox.push({ op: 'product_save', upc: upc, name: name, meal: meal || '', brand: r.brand || '', ingredients: r.ingredients || '' });
+        saveCache(); refreshSyncPill(); flush();
+        if (r.ingredients) flash(mealStatus, 'Ingredients added to your library for ' + name + '.', 6000, true);
+      }
+    });
+  }
+
   function lookupOFF(upc) {
     var url = 'https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(upc) + '.json?fields=product_name,brands,quantity,ingredients_text';
     return fetch(url).then(function (r) {

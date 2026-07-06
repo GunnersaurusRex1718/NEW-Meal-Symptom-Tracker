@@ -191,7 +191,12 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h2v16H2V4zm3 0h1v16H5V4zm2 0h2v16H7V4zm3 0h1v16h-1V4zm3 0h2v16h-2V4zm3 0h1v16h-1V4zm2 0h3v16h-3V4z"/></svg>
           Scan
         </button>
+        <button class="scan-btn" id="photoBtn" type="button" aria-label="Photograph your plate and let AI identify it">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3l-1.8 2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9zm3 5.5a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+          Photo
+        </button>
       </div>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" aria-hidden="true">
       <div class="field-label">Amount <span style="text-transform:none;letter-spacing:0;color:#A8A395">(optional)</span></div>
       <input type="text" id="amountInput" placeholder="e.g. 1 cup, 2 slices, half a plate" maxlength="120" aria-label="How much did you eat?">
       <div class="field-label">Meal type</div>
@@ -257,7 +262,7 @@
       <button class="btn-primary" id="cfgSave" type="button">Test &amp; save</button>
     </div>
     <div class="modal-msg" id="cfgMsg"></div>
-    <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #B8B3A4;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:#A8A395">App build <span id="feBuild"></span> &middot; backend build shown at your /exec URL</div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #B8B3A4;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:#A8A395">App build <span id="feBuild"></span> &middot; backend <span id="beBuild">not seen yet</span> <span style="text-transform:none;letter-spacing:0">(read live from the URL this device actually posts to)</span></div>
   </div>
 </div>
 
@@ -321,7 +326,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v2.6-brand-ingredients';
+  var APP_BUILD = 'fe-v3.0-photo-dishes';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var VALID_MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Other'];
@@ -330,6 +335,8 @@
   var cfg = null, server = [], outbox = [];
   var selectedMeal = 'Breakfast', selectedSev = 3, syncing = false;
   var pendingUpc = null, pendingUpcSave = false, pendingBrand = '', pendingIngredients = '';  // link a scanned product to the next meal add
+  var pendingDish = null;      // link a photographed dish {ingredients, confidence} to the next meal add
+  var lastBackendBuild = '';   // build string echoed by the backend on live traffic
 
   var $ = function (id) { return document.getElementById(id); };
   var logEl = $('log'), syncPill = $('syncPill'), syncText = $('syncText');
@@ -358,7 +365,16 @@
     return fetch(cfg.url, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(Object.assign({ token: cfg.token || '' }, payload))
-    }).then(function (r) { return r.json(); });
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      // The backend stamps its build on every response — record it so the gear
+      // panel shows what THIS device is actually talking to (a stale deployment
+      // URL is invisible any other way).
+      if (res && res.build) {
+        lastBackendBuild = res.build;
+        try { var b = $('beBuild'); if (b) b.textContent = res.build; } catch (e) {}
+      }
+      return res;
+    });
   }
 
   // ---- time
@@ -478,7 +494,12 @@
     if (pendingUpc && pendingUpcSave) {
       outbox.push({ op: 'product_save', upc: pendingUpc, name: text, meal: selectedMeal, brand: pendingBrand, ingredients: pendingIngredients });
     }
-    pendingUpc = null; pendingUpcSave = false; pendingBrand = ''; pendingIngredients = '';
+    // if this meal came from a photo, remember the dish + inferred ingredients (uses the
+    // FINAL text, so your edits to the name become the library entry)
+    if (pendingDish && pendingDish.ingredients) {
+      outbox.push({ op: 'dish_save', name: text, meal: selectedMeal, ingredients: pendingDish.ingredients });
+    }
+    pendingUpc = null; pendingUpcSave = false; pendingBrand = ''; pendingIngredients = ''; pendingDish = null;
     foodInput.value = ''; amountInput.value = ''; mealTime.value = toLocalInputValue();
     saveCache(); render(); refreshSyncPill(); foodInput.focus(); flush();
   }
@@ -571,12 +592,27 @@
       else if (op.op === 'delete') call = post({ action: 'delete', id: op.id });
       else if (op.op === 'update') call = post({ action: 'update', id: op.id, patch: op.patch });
       else if (op.op === 'product_save') call = post({ action: 'product_save', upc: op.upc, name: op.name, meal: op.meal, brand: op.brand, ingredients: op.ingredients });
+      else if (op.op === 'dish_save') call = post({ action: 'dish_save', name: op.name, meal: op.meal, ingredients: op.ingredients });
       else call = Promise.resolve({ ok: true });
       return call.then(function (res) {
         if (res && (res.ok || res.error === 'not found')) {
           outbox = outbox.filter(function (o) { return o !== op; });
           if (op.op === 'delete' && res.ok) server = server.filter(function (s) { return s.id !== op.id; });
+          // Library writes echo back what landed in the Sheet — surface it so
+          // "did brand/ingredients actually save?" is answered on the spot.
+          if (res.ok && op.op === 'product_save') {
+            try { console.log('product_save', op.upc, res); } catch (e) {}
+            flash(mealStatus, 'Library row ' + (res.row || '?') + ' saved \u2014 brand ' + (res.brandLen ? 'yes' : 'no') +
+              ', ingredients ' + (res.ingLen ? res.ingLen + ' chars' : 'none') + '.', 6000, true);
+          }
+          if (res.ok && op.op === 'dish_save') {
+            try { console.log('dish_save', op.name, res); } catch (e) {}
+            flash(mealStatus, 'Dish saved to your library' + (res.ingLen ? ' with ' + res.ingLen + ' chars of ingredients' : '') + '.', 6000, true);
+          }
           saveCache();
+        } else if (res && res.error) {
+          // Op stays queued for retry; make the reason visible instead of silent.
+          try { console.warn('Sync op failed (kept in outbox):', op.op, res); } catch (e) {}
         }
         i++; return step();
       }).catch(function () { syncing = false; refreshSyncPill(); render(); throw new Error('offline'); });
@@ -683,7 +719,7 @@
   }
 
   function fillFromProduct(upc, name, meal, needsSave, detail) {
-    pendingUpc = upc; pendingUpcSave = !!needsSave;
+    pendingUpc = upc; pendingUpcSave = !!needsSave; pendingDish = null;   // a scan supersedes a pending photo
     pendingBrand = (detail && detail.brand) || ''; pendingIngredients = (detail && detail.ingredients) || '';
     foodInput.value = name || '';
     if (meal && VALID_MEALS.indexOf(meal) >= 0) {
@@ -795,6 +831,82 @@
     scanHandled = true; stopCamera(); onUpc(v);
   });
 
+  // ================= PHOTO -> TICKET (Claude vision) =================
+  // Snap the plate; the backend asks Claude to identify the dish and infer its
+  // ingredients. This closes the biggest gap in the ingredient library: home-cooked
+  // meals, which barcodes can never cover. The result only pre-fills the writer —
+  // you confirm/edit before Add, and the (possibly edited) name + inferred
+  // ingredients land in the Dishes tab for the Chef's Review to use.
+  var photoBtn = $('photoBtn'), photoInput = $('photoInput');
+
+  // iPhone photos are ~12MP; downscale to <=1280px JPEG so the upload is ~150-400KB
+  // instead of several MB, well under API limits and fast even on one bar of LTE.
+  function fileToJpegBase64(file, maxDim, quality) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var w = img.naturalWidth, h = img.naturalHeight;
+          if (!w || !h) throw new Error('empty image');
+          var scale = Math.min(1, maxDim / Math.max(w, h));
+          var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+          var c = document.createElement('canvas'); c.width = cw; c.height = ch;
+          c.getContext('2d').drawImage(img, 0, 0, cw, ch);
+          var dataUrl = c.toDataURL('image/jpeg', quality);
+          URL.revokeObjectURL(url);
+          resolve(dataUrl.split(',')[1]);
+        } catch (e) { URL.revokeObjectURL(url); reject(e); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('bad image')); };
+      img.src = url;
+    });
+  }
+
+  function setPhotoBusy(busy) {
+    photoBtn.disabled = busy;
+    photoBtn.style.opacity = busy ? '0.6' : '';
+  }
+
+  photoBtn.addEventListener('click', function () {
+    if (!cfg) { flash(mealStatus, 'Connect your rail first (gear icon).'); return; }
+    if (!navigator.onLine) { flash(mealStatus, 'Photo ID needs a connection \u2014 type the meal instead and it\u2019ll sync later.'); return; }
+    photoInput.value = '';          // allow re-selecting the same file
+    photoInput.click();
+  });
+
+  photoInput.addEventListener('change', function () {
+    var file = photoInput.files && photoInput.files[0];
+    if (!file) return;
+    setPhotoBusy(true);
+    flash(mealStatus, 'Reading your plate\u2026', 20000, true);
+    fileToJpegBase64(file, 1280, 0.82).then(function (b64) {
+      return post({ action: 'photo_parse', image: b64, media: 'image/jpeg' });
+    }).then(function (res) {
+      if (res && res.ok && res.dish) {
+        var d = res.dish;
+        pendingUpc = null; pendingUpcSave = false; pendingBrand = ''; pendingIngredients = '';   // a photo supersedes a pending scan
+        pendingDish = { ingredients: d.ingredients || '', confidence: d.confidence || 'low' };
+        foodInput.value = d.name || '';
+        if (d.amount) amountInput.value = d.amount;
+        if (d.meal && VALID_MEALS.indexOf(d.meal) >= 0) {
+          selectedMeal = d.meal;
+          mealBtns.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-meal') === d.meal); });
+        }
+        showTab(true);
+        var ingNote = d.ingredients ? (' Ingredients inferred (' + d.ingredients.split(',').length + ').') : '';
+        var confNote = d.confidence === 'low' ? ' Low confidence \u2014 double-check it.' : '';
+        flash(mealStatus, 'Read: ' + d.name + '.' + ingNote + confNote + ' Adjust if needed, then Add.', 9000, true);
+        foodInput.focus();
+      } else {
+        var msg = (res && res.error) ? res.error : 'Couldn\u2019t read the photo \u2014 try again or type it.';
+        flash(mealStatus, 'Photo: ' + msg, 8000);
+      }
+    }).catch(function () {
+      flash(mealStatus, 'Photo upload failed \u2014 check your connection, or type the meal.', 8000);
+    }).finally(function () { setPhotoBusy(false); });
+  });
+
   // ================= Chef's review =================
   function renderReview(report) {
     reviewPanel.textContent = '';
@@ -893,6 +1005,24 @@
 
   window.addEventListener('online', function () { flush(); });
   window.addEventListener('offline', function () { refreshSyncPill(); });
+
+  // ---- outbox durability
+  // The Sheet re-sync makes the SERVER cache disposable, but unsynced OUTBOX entries
+  // live only in localStorage — if iOS evicts it, they're gone. Two mitigations:
+  // (1) ask the browser to mark this origin's storage persistent (honored for
+  //     installed PWAs far more often than people expect), and
+  // (2) flush every time the app returns to the foreground, so pending entries
+  //     survive for hours, not days.
+  try {
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().then(function (granted) {
+        try { console.log('Persistent storage: ' + (granted ? 'granted' : 'not granted')); } catch (e) {}
+      });
+    }
+  } catch (e) {}
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') flush();
+  });
 
   // ================= boot =================
   try { var fb = document.getElementById('feBuild'); if (fb) fb.textContent = APP_BUILD; } catch (e) {}

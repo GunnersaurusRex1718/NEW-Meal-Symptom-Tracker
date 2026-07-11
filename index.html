@@ -59,8 +59,9 @@
   .writer.symptom-writer { background: #F3E4E1; display: none; }
   .writer-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #77828B; margin-bottom: 8px; }
   .symptom-writer .writer-label { color: #A98782; }
-  .food-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
-  .food-row input[type="text"] { flex: 1; min-width: 60%; }
+  .food-input { width: 100%; }
+  .tool-row { display: flex; gap: 8px; margin-top: 10px; }
+  .tool-row .scan-btn { flex: 1; justify-content: center; }
   .writer input[type="text"] { width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #23211C; background: transparent; border: none; border-bottom: 2px dashed #B8B3A4; padding: 6px 2px 8px; outline: none; }
   .writer input[type="text"]:focus { border-bottom-color: #23211C; }
   .writer input[type="text"]::placeholder { color: #A8A395; }
@@ -234,8 +235,8 @@
     <!-- Meal writer -->
     <div class="writer" id="mealWriter">
       <div class="writer-label">New meal ticket</div>
-      <div class="food-row">
-        <input type="text" id="foodInput" placeholder="e.g. two eggs over easy, rye toast" maxlength="300" aria-label="What did you eat?">
+      <input type="text" id="foodInput" class="food-input" placeholder="e.g. two eggs over easy, rye toast" maxlength="300" aria-label="What did you eat?">
+      <div class="tool-row">
         <button class="scan-btn" id="scanBtn" type="button" aria-label="Scan a UPC barcode">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h2v16H2V4zm3 0h1v16H5V4zm2 0h2v16H7V4zm3 0h1v16h-1V4zm3 0h2v16h-2V4zm3 0h1v16h-1V4zm2 0h3v16h-3V4z"/></svg>
           Scan
@@ -244,7 +245,12 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h4v16H3V4zm5 0h3v16H8V4zm9.5 0l3.5 15.5-3.9.9L13.6 5l3.9-1z"/></svg>
           Library
         </button>
+        <button class="scan-btn" id="photoBtn" type="button" aria-label="Identify a meal from a photo">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3l-1.5 2H4a2 2 0 00-2 2v11a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2h-3.5L15 3H9zm3 5a5 5 0 110 10 5 5 0 010-10zm0 2a3 3 0 100 6 3 3 0 000-6z"/></svg>
+          Photo
+        </button>
       </div>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none">
       <div class="field-label">Amount <span style="text-transform:none;letter-spacing:0;color:#A8A395">(optional)</span></div>
       <input type="text" id="amountInput" placeholder="e.g. 1 cup, 2 slices, half a plate" maxlength="120" aria-label="How much did you eat?">
       <div class="field-label">Meal type</div>
@@ -415,7 +421,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v2.8-bathroom-insights';
+  var APP_BUILD = 'fe-v3.1-unified';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var VALID_MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Other'];
@@ -427,6 +433,7 @@
   var cfg = null, server = [], outbox = [], products = [];
   var selectedMeal = 'Breakfast', selectedSev = 3, selectedBristol = 4, syncing = false;
   var pendingUpc = null, pendingUpcSave = false, pendingBrand = '', pendingIngredients = '';  // link a scanned product to the next meal add
+  var pendingDishName = null, pendingDishIngredients = '';  // link a photographed dish to the next meal add
 
   // Mirror of the backend UPC normalizer (digits only, no leading zeros).
   function normU(x) { return String(x == null ? '' : x).replace(/\D/g, '').replace(/^0+/, ''); }
@@ -589,7 +596,12 @@
     if (pendingUpc && pendingUpcSave) {
       outbox.push({ op: 'product_save', upc: pendingUpc, name: text, meal: selectedMeal, brand: pendingBrand, ingredients: pendingIngredients });
     }
+    // if this meal came from a photo, remember the dish (deduped by name on the backend)
+    if (pendingDishName) {
+      outbox.push({ op: 'dish_save', name: text, meal: selectedMeal, ingredients: pendingDishIngredients });
+    }
     pendingUpc = null; pendingUpcSave = false; pendingBrand = ''; pendingIngredients = '';
+    pendingDishName = null; pendingDishIngredients = '';
     foodInput.value = ''; amountInput.value = ''; mealTime.value = toLocalInputValue();
     saveCache(); render(); refreshSyncPill(); foodInput.focus(); flush();
   }
@@ -707,6 +719,7 @@
       else if (op.op === 'update') call = post({ action: 'update', id: op.id, patch: op.patch });
       else if (op.op === 'product_save') call = post({ action: 'product_save', upc: op.upc, name: op.name, meal: op.meal, brand: op.brand, ingredients: op.ingredients });
       else if (op.op === 'product_delete') call = post({ action: 'product_delete', upc: op.upc });
+      else if (op.op === 'dish_save') call = post({ action: 'dish_save', name: op.name, meal: op.meal, ingredients: op.ingredients });
       else call = Promise.resolve({ ok: true });
       return call.then(function (res) {
         if (res && (res.ok || res.error === 'not found')) {
@@ -934,6 +947,71 @@
     var v = scanManualUpc.value.replace(/\D/g, '');
     if (!validUpcLen(v)) { scanSetMsg('Type the full UPC digits (8\u201314).', true); return; }
     scanHandled = true; stopCamera(); onUpc(v);
+  });
+
+  // ================= Photo -> meal (Claude vision) =================
+  var photoInput = $('photoInput');
+
+  // Downscale on-device to keep the upload small (~150-400KB) before sending to the backend.
+  function downscaleImage(file, maxDim, quality) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var w = img.width, h = img.height;
+        var scale = Math.min(1, maxDim / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+        var canvas = document.createElement('canvas'); canvas.width = cw; canvas.height = ch;
+        canvas.getContext('2d').drawImage(img, 0, 0, cw, ch);
+        try {
+          var dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve({ base64: dataUrl.split(',')[1], media_type: 'image/jpeg' });
+        } catch (e) { reject(e); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('image load failed')); };
+      img.src = url;
+    });
+  }
+
+  function handlePhoto(file) {
+    if (!file) return;
+    if (!cfg) { flash(mealStatus, 'Connect your rail first (gear icon).'); return; }
+    if (!navigator.onLine) { flash(mealStatus, 'Photo ID needs a connection \u2014 type it in instead.', 5000); return; }
+    showTab('meal');
+    flash(mealStatus, 'Identifying the meal\u2026', 20000, true);
+    downscaleImage(file, 1280, 0.8).then(function (img) {
+      return post({ action: 'photo_parse', image: img.base64, media_type: img.media_type });
+    }).then(function (res) {
+      if (res && res.ok && res.dish) { fillFromPhoto(res.dish); }
+      else { flash(mealStatus, (res && res.error) ? ('Photo: ' + res.error) : 'Could not identify it \u2014 type it in.', 6000); }
+    }).catch(function () { flash(mealStatus, 'Photo failed \u2014 try again or type it in.', 6000); });
+  }
+
+  function fillFromPhoto(dish) {
+    var name = String(dish.name || '').trim();
+    foodInput.value = name;
+    if (dish.amount) amountInput.value = String(dish.amount).slice(0, 120);
+    var meal = String(dish.meal || '');
+    if (VALID_MEALS.indexOf(meal) >= 0) {
+      selectedMeal = meal;
+      mealBtns.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-meal') === meal); });
+    }
+    pendingDishName = name || 'photo';
+    pendingDishIngredients = String(dish.ingredients || '').slice(0, 1000);
+    var conf = String(dish.confidence || '');
+    flash(mealStatus, 'Identified: ' + (name || '?') + (conf ? (' (' + conf + ' confidence)') : '') + '. Check it, then Add.', 9000, true);
+    foodInput.focus();
+  }
+
+  $('photoBtn').addEventListener('click', function () {
+    if (!cfg) { flash(mealStatus, 'Connect your rail first (gear icon).'); return; }
+    photoInput.value = '';   // allow re-selecting the same file
+    photoInput.click();
+  });
+  photoInput.addEventListener('change', function (ev) {
+    var f = ev.target.files && ev.target.files[0];
+    if (f) handlePhoto(f);
   });
 
   // ================= Library picker =================

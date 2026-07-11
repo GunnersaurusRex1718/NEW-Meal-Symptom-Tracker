@@ -1,10 +1,9 @@
-/* The Ticket Rail — service worker (v3)
-   Caches the app shell (including the ZXing scanner library) so the app opens
+/* The Ticket Rail — service worker (v2)
+   Caches the app shell (now including the ZXing scanner library) so the app opens
    and scans offline. Data lives in localStorage and syncs to your Google Sheet when
-   online. Only the AI review, photo ID, and Open Food Facts lookups need a live
-   connection. Bumping CACHE forces the old shell out on the next activate. */
+   online. Only the AI review and Open Food Facts lookups need a live connection. */
 
-const CACHE = 'ticketrail-v3';
+const CACHE = 'ticketrail-v2';
 const SHELL = [
   './',
   './index.html',

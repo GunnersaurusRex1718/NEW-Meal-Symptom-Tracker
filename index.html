@@ -173,6 +173,16 @@
   .mini-btn.void:hover { border-color: #A03332; color: #A03332; }
   .mini-btn:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
   .empty { margin-top: 40px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 1px; color: #77828B; line-height: 1.6; }
+  .week-card { margin-top: 24px; background: linear-gradient(180deg, #2A343B 0%, #232C32 100%); border: 1px solid #37424A; border-radius: 4px; padding: 14px 16px; }
+  .week-head { display: flex; align-items: baseline; gap: 10px; }
+  .week-title { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 17px; letter-spacing: 2.5px; text-transform: uppercase; color: #F5F3EA; }
+  .week-days { margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #9AA6AE; letter-spacing: 0.5px; }
+  .week-counts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .week-chip { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #DCE3E8; background: #1B2227; border: 1px solid #37424A; border-radius: 20px; padding: 4px 12px; }
+  .week-chip b { font-family: 'Saira Condensed', sans-serif; font-size: 15px; margin-right: 3px; }
+  .week-chip.c-meal b { color: #E7AF12; } .week-chip.c-symp b { color: #E4837F; } .week-chip.c-bowel b { color: #7FB0C9; }
+  .week-line { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9AA6AE; margin-top: 10px; line-height: 1.5; }
+  .week-em { color: #DCE3E8; }
 
   /* Modals */
   .modal-back { display: none; position: fixed; inset: 0; background: rgba(15,19,22,0.86); z-index: 50; padding: 20px; overflow: auto; }
@@ -199,6 +209,7 @@
   .lib-name { font-family: 'IBM Plex Mono', monospace; font-size: 14px; display: block; overflow-wrap: anywhere; }
   .lib-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
   .lib-badge { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; padding: 1px 6px; border: 1px solid #B8B3A4; border-radius: 2px; color: #77828B; }
+  .lib-badge.dish { border-color: #2C5A73; color: #2C5A73; }
   .lib-brand { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #A8A395; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lib-ops { display: flex; flex-direction: column; border-left: 1px solid #E4DFD0; }
   .lib-op { flex: 1; background: transparent; border: none; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #A8A395; padding: 0 12px; }
@@ -462,7 +473,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v3.2-cost-reviews';
+  var APP_BUILD = 'fe-v3.3-picker-glance';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var VALID_MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Other'];
@@ -471,13 +482,15 @@
   function bristolBand(n) { return n <= 2 ? 'Constipation' : (n >= 6 ? 'Loose' : 'Normal'); }
   function bandClass(n) { return n <= 2 ? 'band-constipation' : (n >= 6 ? 'band-loose' : 'band-normal'); }
 
-  var cfg = null, server = [], outbox = [], products = [];
+  var cfg = null, server = [], outbox = [], products = [], dishes = [];
   var selectedMeal = 'Breakfast', selectedSev = 3, selectedBristol = 4, syncing = false;
   var pendingUpc = null, pendingUpcSave = false, pendingBrand = '', pendingIngredients = '';  // link a scanned product to the next meal add
   var pendingDishName = null, pendingDishIngredients = '';  // link a photographed dish to the next meal add
 
   // Mirror of the backend UPC normalizer (digits only, no leading zeros).
   function normU(x) { return String(x == null ? '' : x).replace(/\D/g, '').replace(/^0+/, ''); }
+  // Mirrors backend normKey_: dish names dedupe case/punctuation-insensitively.
+  function normName(s) { return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
 
   var $ = function (id) { return document.getElementById(id); };
   var logEl = $('log'), syncPill = $('syncPill'), syncText = $('syncText');
@@ -498,10 +511,10 @@
   // ---- persistence
   function loadLocal() {
     try { cfg = JSON.parse(localStorage.getItem(CFG_KEY)) || null; } catch (e) { cfg = null; }
-    try { var c = JSON.parse(localStorage.getItem(CACHE_KEY)); if (c) { server = c.server || []; outbox = c.outbox || []; products = c.products || []; } }
-    catch (e) { server = []; outbox = []; products = []; }
+    try { var c = JSON.parse(localStorage.getItem(CACHE_KEY)); if (c) { server = c.server || []; outbox = c.outbox || []; products = c.products || []; dishes = c.dishes || []; } }
+    catch (e) { server = []; outbox = []; products = []; dishes = []; }
   }
-  function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ server: server, outbox: outbox, products: products })); } catch (e) {} }
+  function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ server: server, outbox: outbox, products: products, dishes: dishes })); } catch (e) {} }
   function saveCfg() { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {} }
 
   function post(payload) {
@@ -544,9 +557,74 @@
     return list;
   }
 
+  // Local "This week" glance — computed from the cache, costs no API call.
+  function renderWeekly(all) {
+    if (!cfg || !all || !all.length) return;
+    var since = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    var wk = all.filter(function (e) { return e.ts >= since; });
+    if (!wk.length) return;
+
+    var meals = wk.filter(function (e) { return e.kind === 'meal'; });
+    var symps = wk.filter(function (e) { return e.kind === 'symptom'; });
+    var bms = wk.filter(function (e) { return e.kind === 'bathroom'; });
+
+    var days = {};
+    wk.forEach(function (e) { days[dayKey(e.ts)] = true; });
+    var daysLogged = Object.keys(days).length;
+
+    // top foods by frequency (normalized meal text)
+    var freq = {};
+    meals.forEach(function (e) {
+      var n = normName(e.text); if (!n) return;
+      if (!freq[n]) freq[n] = { count: 0, label: e.text };
+      freq[n].count++;
+    });
+    var top = Object.keys(freq).map(function (k) { return freq[k]; })
+      .sort(function (a, b) { return b.count - a.count; }).slice(0, 3);
+
+    // bristol bands
+    var bands = { Normal: 0, Constipation: 0, Loose: 0 };
+    bms.forEach(function (e) { bands[bristolBand(e.bristol)]++; });
+
+    var card = document.createElement('section'); card.className = 'week-card';
+    var head = document.createElement('div'); head.className = 'week-head';
+    var title = document.createElement('span'); title.className = 'week-title'; title.textContent = 'This week';
+    var dl = document.createElement('span'); dl.className = 'week-days'; dl.textContent = 'Logged ' + daysLogged + ' of 7 days';
+    head.appendChild(title); head.appendChild(dl); card.appendChild(head);
+
+    var counts = document.createElement('div'); counts.className = 'week-counts';
+    function chip(n, label, cls) {
+      var c = document.createElement('span'); c.className = 'week-chip ' + (cls || '');
+      var b = document.createElement('b'); b.textContent = n; c.appendChild(b);
+      c.appendChild(document.createTextNode(' ' + label)); return c;
+    }
+    counts.appendChild(chip(meals.length, meals.length === 1 ? 'meal' : 'meals', 'c-meal'));
+    counts.appendChild(chip(symps.length, 'feeling-off', 'c-symp'));
+    counts.appendChild(chip(bms.length, 'bathroom', 'c-bowel'));
+    card.appendChild(counts);
+
+    if (top.length) {
+      var mf = document.createElement('div'); mf.className = 'week-line';
+      mf.appendChild(document.createTextNode('Most logged: '));
+      var strong = document.createElement('span'); strong.className = 'week-em';
+      strong.textContent = top.map(function (t) { return t.label + (t.count > 1 ? ' \u00d7' + t.count : ''); }).join(', ');
+      mf.appendChild(strong); card.appendChild(mf);
+    }
+    if (bms.length) {
+      var bl = document.createElement('div'); bl.className = 'week-line';
+      bl.appendChild(document.createTextNode('Bristol: '));
+      var parts = [];
+      ['Normal', 'Loose', 'Constipation'].forEach(function (k) { if (bands[k]) parts.push(bands[k] + ' ' + k.toLowerCase()); });
+      var bem = document.createElement('span'); bem.className = 'week-em'; bem.textContent = parts.join(', ');
+      bl.appendChild(bem); card.appendChild(bl);
+    }
+    logEl.appendChild(card);
+  }
+
   function render() {
     logEl.textContent = '';
     var all = viewEntries();
+    renderWeekly(all);
     if (all.length === 0) {
       var empty = document.createElement('div'); empty.className = 'empty';
       empty.textContent = cfg ? 'No tickets on the rail. Log your first meal above.' : 'Connect your rail from the gear icon to begin.';
@@ -761,6 +839,7 @@
       else if (op.op === 'product_save') call = post({ action: 'product_save', upc: op.upc, name: op.name, meal: op.meal, brand: op.brand, ingredients: op.ingredients });
       else if (op.op === 'product_delete') call = post({ action: 'product_delete', upc: op.upc });
       else if (op.op === 'dish_save') call = post({ action: 'dish_save', name: op.name, meal: op.meal, ingredients: op.ingredients });
+      else if (op.op === 'dish_delete') call = post({ action: 'dish_delete', name: op.name });
       else call = Promise.resolve({ ok: true });
       return call.then(function (res) {
         if (res && (res.ok || res.error === 'not found')) {
@@ -780,6 +859,9 @@
       return post({ action: 'product_list' });
     }).then(function (pres) {
       if (pres && pres.ok && Array.isArray(pres.products)) { products = pres.products; saveCache(); }
+      return post({ action: 'dish_list' });
+    }).then(function (dres) {
+      if (dres && dres.ok && Array.isArray(dres.dishes)) { dishes = dres.dishes; saveCache(); }
       syncing = false; render(); refreshSyncPill();
       if (libBack.classList.contains('on')) renderLibrary();
     }).catch(function () { syncing = false; refreshSyncPill(); });
@@ -1060,24 +1142,45 @@
 
   // Products snapshot with pending outbox ops applied (new/renamed/deleted not yet synced).
   function libraryView() {
-    var deletes = {}, upserts = {};
+    // products (keyed by normalized UPC)
+    var pDel = {}, pUp = {};
     outbox.forEach(function (op) {
-      if (op.op === 'product_delete') deletes[normU(op.upc)] = true;
-      if (op.op === 'product_save') upserts[normU(op.upc)] = op;
+      if (op.op === 'product_delete') pDel[normU(op.upc)] = true;
+      if (op.op === 'product_save') pUp[normU(op.upc)] = op;
     });
-    var map = {};
-    products.forEach(function (p) { if (p && p.upc != null) map[normU(p.upc)] = Object.assign({}, p); });
-    Object.keys(upserts).forEach(function (k) {
-      var op = upserts[k], cur = map[k] || { upc: op.upc };
+    var pmap = {};
+    products.forEach(function (p) { if (p && p.upc != null) pmap[normU(p.upc)] = Object.assign({ kind: 'product' }, p); });
+    Object.keys(pUp).forEach(function (k) {
+      var op = pUp[k], cur = pmap[k] || { kind: 'product', upc: op.upc };
       if (op.name != null) cur.name = op.name;
       if (op.meal) cur.meal = op.meal;
       if (op.brand) cur.brand = op.brand;
       if (op.ingredients) cur.ingredients = op.ingredients;
-      map[k] = cur;
+      pmap[k] = cur;
     });
-    Object.keys(deletes).forEach(function (k) { delete map[k]; });
-    return Object.keys(map).map(function (k) { return map[k]; })
-      .filter(function (p) { return p.name || p.upc; });
+    Object.keys(pDel).forEach(function (k) { delete pmap[k]; });
+
+    // dishes (keyed by normalized name)
+    var dDel = {}, dUp = {};
+    outbox.forEach(function (op) {
+      if (op.op === 'dish_delete') dDel[normName(op.name)] = true;
+      if (op.op === 'dish_save') dUp[normName(op.name)] = op;
+    });
+    var dmap = {};
+    dishes.forEach(function (d) { if (d && d.name) dmap[normName(d.name)] = Object.assign({ kind: 'dish' }, d); });
+    Object.keys(dUp).forEach(function (k) {
+      var op = dUp[k], cur = dmap[k] || { kind: 'dish', name: op.name };
+      if (op.name != null) cur.name = op.name;
+      if (op.meal) cur.meal = op.meal;
+      if (op.ingredients) cur.ingredients = op.ingredients;
+      dmap[k] = cur;
+    });
+    Object.keys(dDel).forEach(function (k) { delete dmap[k]; });
+
+    var out = [];
+    Object.keys(pmap).forEach(function (k) { out.push(pmap[k]); });
+    Object.keys(dmap).forEach(function (k) { out.push(dmap[k]); });
+    return out.filter(function (x) { return x.name || x.upc; });
   }
 
   function openLibrary() {
@@ -1099,7 +1202,7 @@
     libList.textContent = '';
     if (!items.length) {
       var e = document.createElement('div'); e.className = 'empty'; e.style.margin = '18px 0';
-      e.textContent = products.length ? 'No matches.' : 'Your library is empty — scan or add items first.';
+      e.textContent = (products.length || dishes.length) ? 'No matches.' : 'Your library is empty — scan or photo items first.';
       libList.appendChild(e); return;
     }
     items.forEach(function (p) { libList.appendChild(libRow(p)); });
@@ -1113,17 +1216,21 @@
     main.appendChild(name);
     var meta = document.createElement('div'); meta.className = 'lib-meta';
     if (p.meal) { var badge = document.createElement('span'); badge.className = 'lib-badge'; badge.textContent = p.meal; meta.appendChild(badge); }
-    if (p.brand) { var br = document.createElement('span'); br.className = 'lib-brand'; br.textContent = p.brand; meta.appendChild(br); }
-    if (p.meal || p.brand) main.appendChild(meta);
+    if (p.kind === 'dish') { var db = document.createElement('span'); db.className = 'lib-badge dish'; db.textContent = 'Dish'; meta.appendChild(db); }
+    else if (p.brand) { var br = document.createElement('span'); br.className = 'lib-brand'; br.textContent = p.brand; meta.appendChild(br); }
+    if (meta.childNodes.length) main.appendChild(meta);
     main.addEventListener('click', function () { selectFromLibrary(p); });
     row.appendChild(main);
 
     var ops = document.createElement('div'); ops.className = 'lib-ops';
-    var edit = document.createElement('button'); edit.type = 'button'; edit.className = 'lib-op'; edit.textContent = 'Edit';
-    edit.addEventListener('click', function () { editRow(row, p); });
+    if (p.kind !== 'dish') {   // dishes are name-keyed, so no inline rename; products keep Edit
+      var edit = document.createElement('button'); edit.type = 'button'; edit.className = 'lib-op'; edit.textContent = 'Edit';
+      edit.addEventListener('click', function () { editRow(row, p); });
+      ops.appendChild(edit);
+    }
     var del = document.createElement('button'); del.type = 'button'; del.className = 'lib-op del'; del.textContent = 'Delete';
-    del.addEventListener('click', function () { deleteProduct(p); });
-    ops.appendChild(edit); ops.appendChild(del);
+    del.addEventListener('click', function () { deleteItem(p); });
+    ops.appendChild(del);
     row.appendChild(ops);
     return row;
   }
@@ -1166,9 +1273,11 @@
     saveCache(); refreshSyncPill(); renderLibrary(); flush();
   }
 
-  function deleteProduct(p) {
-    if (!window.confirm('Remove "' + (p.name || p.upc) + '" from your library? This does not affect meals you\u2019ve already logged.')) return;
-    outbox.push({ op: 'product_delete', upc: String(p.upc) });
+  function deleteItem(p) {
+    var label = p.name || p.upc || 'item';
+    if (!window.confirm('Remove "' + label + '" from your library? This does not affect meals you\u2019ve already logged.')) return;
+    if (p.kind === 'dish') outbox.push({ op: 'dish_delete', name: p.name });
+    else outbox.push({ op: 'product_delete', upc: String(p.upc) });
     saveCache(); refreshSyncPill(); renderLibrary(); flush();
   }
 

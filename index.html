@@ -102,6 +102,21 @@
   .review-bar { display: flex; align-items: center; gap: 12px; margin-top: 26px; background: linear-gradient(180deg,#414D56 0%,#37424A 55%,#2E383F 100%); border-radius: 3px; padding: 10px 14px; box-shadow: 0 2px 0 #14191D; }
   .review-bar h2 { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 19px; letter-spacing: 2.5px; text-transform: uppercase; color: #F5F3EA; }
   .review-btn { margin-left: auto; font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; background: #E7AF12; color: #23211C; border: none; padding: 9px 18px; border-radius: 2px; cursor: pointer; box-shadow: 0 2px 0 #14191D; }
+  .review-sub-btn { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; background: transparent; border: 1px solid #4E5860; color: #9AA6AE; padding: 6px 10px; border-radius: 2px; cursor: pointer; }
+  .review-sub-btn:hover { border-color: #9AA6AE; color: #DCE3E8; }
+  .review-opts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+  .opt-group { display: flex; align-items: center; gap: 6px; }
+  .opt-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #77828B; margin-right: 2px; }
+  .opt-btn { font-family: 'Saira Condensed', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; background: transparent; border: 2px solid #37424A; color: #9AA6AE; padding: 4px 10px; border-radius: 2px; cursor: pointer; }
+  .opt-btn.on { border-color: #E7AF12; color: #E7AF12; }
+  .opt-btn:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
+  .review-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #9AA6AE; margin-top: 10px; min-height: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .review-meta .rerun { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; background: transparent; border: 1px solid #E7AF12; color: #E7AF12; padding: 3px 8px; border-radius: 2px; cursor: pointer; }
+  .hist-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: transparent; border: none; border-bottom: 1px solid #E4DFD0; padding: 10px 12px; cursor: pointer; font: inherit; color: #23211C; }
+  .hist-row:last-child { border-bottom: none; }
+  .hist-row:hover { background: #FBF3D9; }
+  .hist-when { font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+  .hist-tags { margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #77828B; letter-spacing: 0.5px; }
   .review-btn:disabled { background: #77828B; color: #2E383F; cursor: wait; }
   .review-btn:focus-visible { outline: 3px solid #F5F3EA; outline-offset: 2px; }
   .review-panel { display: none; background: #F5F3EA; color: #23211C; margin-top: 14px; padding: 16px; border-radius: 2px; box-shadow: 0 3px 0 #14191D; }
@@ -318,8 +333,23 @@
 
     <div class="review-bar">
       <h2>Chef's Review</h2>
+      <button class="review-sub-btn" id="reviewHistoryBtn" type="button">History</button>
       <button class="review-btn" id="reviewBtn" type="button">Analyze</button>
     </div>
+    <div class="review-opts">
+      <div class="opt-group" id="windowGroup" role="group" aria-label="Days of data to review">
+        <span class="opt-label">Window</span>
+        <button class="opt-btn on" data-win="30" type="button">30d</button>
+        <button class="opt-btn" data-win="60" type="button">60d</button>
+        <button class="opt-btn" data-win="90" type="button">90d</button>
+      </div>
+      <div class="opt-group" id="depthGroup" role="group" aria-label="Review depth">
+        <span class="opt-label">Depth</span>
+        <button class="opt-btn on" data-depth="quick" type="button">Quick</button>
+        <button class="opt-btn" data-depth="deep" type="button">Deep</button>
+      </div>
+    </div>
+    <div class="review-meta" id="reviewMeta"></div>
     <div class="review-panel" id="reviewPanel" aria-live="polite"></div>
     <div class="status" id="reviewStatus" role="status" aria-live="polite"></div>
   </div>
@@ -418,10 +448,21 @@
   </div>
 </div>
 
+<!-- Review history -->
+<div class="modal-back" id="histBack">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="histTitle">
+    <h2 id="histTitle">Past reviews</h2>
+    <p class="note">Your saved Chef's Reviews, newest first. Tap one to read it.</p>
+    <div class="lib-list" id="histList"></div>
+    <div class="modal-btns"><button class="btn-ghost" id="histClose" type="button">Close</button></div>
+    <div class="modal-msg" id="histMsg"></div>
+  </div>
+</div>
+
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v3.1-unified';
+  var APP_BUILD = 'fe-v3.2-cost-reviews';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var VALID_MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Other'];
@@ -1193,21 +1234,85 @@
     disc.textContent = 'These are correlations in your own log, not a medical diagnosis. For persistent, severe, or worsening symptoms, talk to a doctor.';
     reviewPanel.appendChild(disc); reviewPanel.style.display = 'block';
   }
-  reviewBtn.addEventListener('click', function () {
+
+  // ---- review options + run
+  var reviewMeta = $('reviewMeta'), reviewWindow = 30, reviewDepth = 'quick';
+  var winBtns = [].slice.call(document.querySelectorAll('#windowGroup .opt-btn'));
+  var depthBtns = [].slice.call(document.querySelectorAll('#depthGroup .opt-btn'));
+  winBtns.forEach(function (b) { b.addEventListener('click', function () { reviewWindow = parseInt(b.getAttribute('data-win'), 10); winBtns.forEach(function (x) { x.classList.toggle('on', x === b); }); }); });
+  depthBtns.forEach(function (b) { b.addEventListener('click', function () { reviewDepth = b.getAttribute('data-depth'); depthBtns.forEach(function (x) { x.classList.toggle('on', x === b); }); }); });
+
+  function modelLabel(m) { return /haiku/i.test(m) ? 'Haiku' : (/sonnet/i.test(m) ? 'Sonnet' : String(m || '')); }
+
+  function showReviewMeta(res) {
+    reviewMeta.textContent = '';
+    if (!res) return;
+    if (res.cached) {
+      var txt = document.createElement('span');
+      txt.textContent = 'Showing your last review (' + modelLabel(res.model) + ' \u00b7 ' + res.windowDays + 'd) \u2014 nothing changed since ' + (res.when || 'then') + '.';
+      var re = document.createElement('button'); re.className = 'rerun'; re.type = 'button'; re.textContent = 'Re-run anyway';
+      re.addEventListener('click', function () { runReview(true); });
+      reviewMeta.appendChild(txt); reviewMeta.appendChild(re);
+    } else {
+      var cost = (typeof res.cost === 'number') ? ('~$' + res.cost.toFixed(res.cost < 0.01 ? 4 : 3)) : '';
+      reviewMeta.textContent = modelLabel(res.model) + ' \u00b7 ' + res.windowDays + ' days \u00b7 ' + cost;
+    }
+  }
+
+  function runReview(force) {
     if (!cfg) { flash(reviewStatus, 'Connect your rail first (gear icon).'); return; }
     if (!navigator.onLine) { flash(reviewStatus, 'The review needs a connection.'); return; }
-    reviewBtn.disabled = true; reviewBtn.textContent = 'Reviewing\u2026';
-    flush().then(function () { return post({ action: 'review' }); }).then(function (res) {
-      if (res && res.ok && res.report) { renderReview(res.report); flash(reviewStatus, ''); }
+    reviewBtn.disabled = true; reviewBtn.textContent = force ? 'Re-running\u2026' : 'Reviewing\u2026';
+    reviewMeta.textContent = '';
+    flush().then(function () {
+      return post({ action: 'review', windowDays: reviewWindow, depth: reviewDepth, force: !!force });
+    }).then(function (res) {
+      if (res && res.ok && res.report) { renderReview(res.report); showReviewMeta(res); flash(reviewStatus, ''); }
       else {
         try { console.warn('Review failed. Full response:', res); if (res && res.raw) console.warn('Raw model output:', res.raw); } catch (e) {}
-        var extra = '';
-        if (res && res.diag) extra = ' [out ' + res.diag.out + ' tok, stop ' + res.diag.stop + ', build ' + res.diag.build + ']';
+        var extra = (res && res.diag) ? (' [out ' + res.diag.out + ' tok, stop ' + res.diag.stop + ']') : '';
         flash(reviewStatus, (res && res.error ? ('Review: ' + res.error) : 'Review failed — try again.') + extra, 12000);
       }
     }).catch(function () { flash(reviewStatus, 'Review failed — check your connection.'); })
       .finally(function () { reviewBtn.disabled = false; reviewBtn.textContent = 'Analyze'; });
-  });
+  }
+  reviewBtn.addEventListener('click', function () { runReview(false); });
+
+  // ---- review history
+  var histBack = $('histBack'), histList = $('histList'), histMsg = $('histMsg');
+  function openHistory() {
+    if (!cfg) { flash(reviewStatus, 'Connect your rail first (gear icon).'); return; }
+    histMsg.textContent = ''; histMsg.className = 'modal-msg';
+    histList.textContent = '';
+    var loading = document.createElement('div'); loading.className = 'empty'; loading.style.margin = '18px 0'; loading.textContent = 'Loading\u2026';
+    histList.appendChild(loading);
+    histBack.classList.add('on');
+    if (!navigator.onLine) { histList.textContent = ''; var o = document.createElement('div'); o.className = 'empty'; o.style.margin = '18px 0'; o.textContent = 'History needs a connection.'; histList.appendChild(o); return; }
+    post({ action: 'review_list' }).then(function (res) {
+      histList.textContent = '';
+      if (!res || !res.ok || !res.reviews || !res.reviews.length) {
+        var e = document.createElement('div'); e.className = 'empty'; e.style.margin = '18px 0'; e.textContent = 'No saved reviews yet.'; histList.appendChild(e); return;
+      }
+      res.reviews.forEach(function (rv) {
+        var row = document.createElement('button'); row.type = 'button'; row.className = 'hist-row';
+        var when = document.createElement('span'); when.className = 'hist-when'; when.textContent = rv.when || new Date(rv.ts).toLocaleString();
+        var tags = document.createElement('span'); tags.className = 'hist-tags';
+        var c = (typeof rv.cost === 'number' && rv.cost > 0) ? ('$' + rv.cost.toFixed(rv.cost < 0.01 ? 4 : 3)) : '';
+        tags.textContent = modelLabel(rv.model) + ' \u00b7 ' + rv.windowDays + 'd' + (c ? (' \u00b7 ' + c) : '');
+        row.appendChild(when); row.appendChild(tags);
+        row.addEventListener('click', function () {
+          var rep = null; try { rep = JSON.parse(rv.report); } catch (e) {}
+          if (rep) { renderReview(rep); showReviewMeta({ cached: true, model: rv.model, windowDays: rv.windowDays, when: rv.when }); closeHistory(); reviewPanel.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+          else { histMsg.className = 'modal-msg err'; histMsg.textContent = 'Could not read that review.'; }
+        });
+        histList.appendChild(row);
+      });
+    }).catch(function () { histList.textContent = ''; histMsg.className = 'modal-msg err'; histMsg.textContent = 'Could not load history.'; });
+  }
+  function closeHistory() { histBack.classList.remove('on'); }
+  $('reviewHistoryBtn').addEventListener('click', openHistory);
+  $('histClose').addEventListener('click', closeHistory);
+  histBack.addEventListener('click', function (ev) { if (ev.target === histBack) closeHistory(); });
 
   // ================= tabs / inputs =================
   var tabMeal = $('tabMeal'), tabSymptom = $('tabSymptom'), tabBathroom = $('tabBathroom');

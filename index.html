@@ -36,7 +36,24 @@
   .tab { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; padding: 8px 18px 6px; border: none; border-radius: 3px 3px 0 0; cursor: pointer; background: #2E383F; color: #77828B; }
   .tab.on { background: #F5F3EA; color: #23211C; }
   .tab.on.tab-symptom { background: #F3E4E1; color: #A03332; }
+  .tab.on.tab-bowel { background: #E4ECF0; color: #2C5A73; }
   .tab:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
+
+  .writer.bowel-writer { background: #E4ECF0; display: none; }
+  .bowel-writer .writer-label { color: #6E8794; }
+  .bowel-writer .field-label { color: #6E8794; }
+  .bowel-writer input[type="text"] { border-bottom-color: #B4C6D0; }
+  .bowel-writer .time-row input[type="datetime-local"] { background: #F1F6F8; border-color: #B4C6D0; }
+  .bowel-writer .now-btn { border-color: #B4C6D0; color: #6E8794; }
+  .bowel-writer .now-btn:hover { border-color: #2C5A73; color: #2C5A73; }
+  .bowel-writer .add-btn { background: #2C5A73; box-shadow: 2px 2px 0 #B4C6D0; }
+  .bristol-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .bristol-btn { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 16px; width: 40px; height: 40px; background: transparent; border: 2px solid #B4C6D0; color: #6E8794; border-radius: 2px; cursor: pointer; }
+  .bristol-btn.on { background: #2C5A73; border-color: #2C5A73; color: #F1F6F8; }
+  .bristol-btn:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
+  .bristol-desc { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #4E6773; margin-top: 8px; min-height: 16px; }
+  .bristol-desc b { font-weight: 600; }
+  .bristol-desc .band-normal { color: #2F6B2E; } .bristol-desc .band-constipation { color: #8A6A0B; } .bristol-desc .band-loose { color: #A03332; }
 
   .writer { background: #F5F3EA; color: #23211C; padding: 14px 14px 16px; border-radius: 0 3px 2px 2px; box-shadow: 0 3px 0 #14191D; }
   .writer.symptom-writer { background: #F3E4E1; display: none; }
@@ -98,6 +115,8 @@
   .conf.high { color: #A03332; } .conf.medium { color: #8A6A0B; } .conf.low { color: #4E5860; }
   .suspect-evidence { margin-top: 6px; color: #4E5860; }
   .disclaimer { margin-top: 16px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.5; color: #77828B; border-top: 2px dashed #B8B3A4; padding-top: 10px; }
+  .insights-divider { border-top: 3px double #B8B3A4; margin: 18px 0 4px; }
+  .review-panel h3.sub { font-size: 13px; letter-spacing: 1.5px; border-bottom: none; margin: 12px 0 4px; color: #4E5860; }
 
   .day { margin-top: 30px; }
   .rail { display: flex; align-items: center; gap: 12px; background: linear-gradient(180deg,#414D56 0%,#37424A 55%,#2E383F 100%); border-radius: 3px; padding: 8px 14px; box-shadow: 0 2px 0 #14191D; }
@@ -110,12 +129,20 @@
   .ticket::before { content: ""; position: absolute; top: -6px; left: 0; right: 0; height: 6px; background-image: radial-gradient(circle at 6px 0px, transparent 5px, #F5F3EA 5px); background-size: 14px 6px; background-repeat: repeat-x; }
   .ticket.symptom { background: #F3E4E1; }
   .ticket.symptom::before { background-image: radial-gradient(circle at 6px 0px, transparent 5px, #F3E4E1 5px); }
+  .ticket.bowel { background: #E4ECF0; }
+  .ticket.bowel::before { background-image: radial-gradient(circle at 6px 0px, transparent 5px, #E4ECF0 5px); }
   .ticket.pending { opacity: 0.72; }
   .ticket-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .stamp { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; padding: 2px 9px 1px; border: 2px solid currentColor; border-radius: 2px; transform: rotate(-2deg); }
   .stamp.Breakfast { color: #8A6A0B; border-color: #E7AF12; } .stamp.Lunch { color: #2F6B2E; border-color: #4F9B4E; }
   .stamp.Dinner { color: #A03332; } .stamp.Snack { color: #1F6666; border-color: #2F8B8B; }
   .stamp.Other { color: #4E5860; border-color: #77828B; } .stamp.FeltOff { color: #FDF7F6; background: #A03332; border-color: #A03332; }
+  .stamp.Bathroom { color: #F1F6F8; background: #2C5A73; border-color: #2C5A73; }
+  .bristol-line { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+  .bristol-chip { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 12px; letter-spacing: 1px; padding: 2px 8px 1px; border: 2px solid #2C5A73; color: #2C5A73; border-radius: 2px; }
+  .bristol-band { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; }
+  .bristol-band.band-normal { color: #2F6B2E; } .bristol-band.band-constipation { color: #8A6A0B; } .bristol-band.band-loose { color: #A03332; }
+  .bristol-note { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #4E6773; }
   .time { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px; color: #77828B; margin-left: auto; }
   .pend-tag { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: #8A6A0B; border: 1px solid #E7AF12; border-radius: 2px; padding: 1px 5px; }
   .ticket-text { font-family: 'IBM Plex Mono', monospace; font-size: 14.5px; line-height: 1.5; overflow-wrap: anywhere; }
@@ -201,6 +228,7 @@
     <div class="tabs" role="tablist" aria-label="Entry type">
       <button class="tab on" id="tabMeal" type="button" role="tab" aria-selected="true">Meal</button>
       <button class="tab tab-symptom" id="tabSymptom" type="button" role="tab" aria-selected="false">Feeling off</button>
+      <button class="tab tab-bowel" id="tabBathroom" type="button" role="tab" aria-selected="false">Bathroom</button>
     </div>
 
     <!-- Meal writer -->
@@ -257,6 +285,31 @@
       <div class="status" id="symptomStatus" role="status" aria-live="polite"></div>
     </div>
 
+    <!-- Bathroom writer -->
+    <div class="writer bowel-writer" id="bathroomWriter">
+      <div class="writer-label">Bathroom ticket</div>
+      <div class="field-label">Bristol type</div>
+      <div class="bristol-row" role="group" aria-label="Bristol stool scale 1 to 7">
+        <button class="bristol-btn" data-b="1" type="button">1</button>
+        <button class="bristol-btn" data-b="2" type="button">2</button>
+        <button class="bristol-btn" data-b="3" type="button">3</button>
+        <button class="bristol-btn on" data-b="4" type="button">4</button>
+        <button class="bristol-btn" data-b="5" type="button">5</button>
+        <button class="bristol-btn" data-b="6" type="button">6</button>
+        <button class="bristol-btn" data-b="7" type="button">7</button>
+      </div>
+      <div class="bristol-desc" id="bristolDesc"></div>
+      <div class="field-label">Notes <span style="text-transform:none;letter-spacing:0;color:#96A6AE">(optional)</span></div>
+      <input type="text" id="bathroomInput" placeholder="e.g. urgent, after coffee" maxlength="300" aria-label="Notes (optional)">
+      <div class="field-label">When</div>
+      <div class="time-row">
+        <input type="datetime-local" id="bathroomTime" aria-label="When it happened">
+        <button class="now-btn" id="bathNowBtn" type="button">Now</button>
+      </div>
+      <div class="add-row"><button class="add-btn" id="addBathroomBtn" type="button">Add</button></div>
+      <div class="status" id="bathroomStatus" role="status" aria-live="polite"></div>
+    </div>
+
     <div class="review-bar">
       <h2>Chef's Review</h2>
       <button class="review-btn" id="reviewBtn" type="button">Analyze</button>
@@ -301,6 +354,10 @@
     <div id="editSevWrap" style="display:none">
       <label>Severity</label>
       <div class="sev-row" id="editSevRow" role="group" aria-label="Severity"></div>
+    </div>
+    <div id="editBristolWrap" style="display:none">
+      <label>Bristol type</label>
+      <div class="bristol-row" id="editBristolRow" role="group" aria-label="Bristol stool scale"></div>
     </div>
     <label for="editTime">Date &amp; time</label>
     <input type="datetime-local" id="editTime">
@@ -358,14 +415,17 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v2.7-library-picker';
+  var APP_BUILD = 'fe-v2.8-bathroom-insights';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var VALID_MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Other'];
   var SEV_WORDS = { 1: 'Mild', 2: 'Mild-moderate', 3: 'Moderate', 4: 'Strong', 5: 'Severe' };
+  var BRISTOL = { 1: 'Separate hard lumps', 2: 'Lumpy, sausage-shaped', 3: 'Sausage with cracks', 4: 'Smooth, soft sausage', 5: 'Soft blobs, clear edges', 6: 'Mushy, ragged edges', 7: 'Liquid, no solids' };
+  function bristolBand(n) { return n <= 2 ? 'Constipation' : (n >= 6 ? 'Loose' : 'Normal'); }
+  function bandClass(n) { return n <= 2 ? 'band-constipation' : (n >= 6 ? 'band-loose' : 'band-normal'); }
 
   var cfg = null, server = [], outbox = [], products = [];
-  var selectedMeal = 'Breakfast', selectedSev = 3, syncing = false;
+  var selectedMeal = 'Breakfast', selectedSev = 3, selectedBristol = 4, syncing = false;
   var pendingUpc = null, pendingUpcSave = false, pendingBrand = '', pendingIngredients = '';  // link a scanned product to the next meal add
 
   // Mirror of the backend UPC normalizer (digits only, no leading zeros).
@@ -375,10 +435,12 @@
   var logEl = $('log'), syncPill = $('syncPill'), syncText = $('syncText');
   var foodInput = $('foodInput'), mealTime = $('mealTime'), amountInput = $('amountInput');
   var symptomInput = $('symptomInput'), symptomTime = $('symptomTime');
-  var mealStatus = $('mealStatus'), symptomStatus = $('symptomStatus'), reviewStatus = $('reviewStatus');
+  var bathroomInput = $('bathroomInput'), bathroomTime = $('bathroomTime'), bristolDesc = $('bristolDesc');
+  var mealStatus = $('mealStatus'), symptomStatus = $('symptomStatus'), bathroomStatus = $('bathroomStatus'), reviewStatus = $('reviewStatus');
   var reviewBtn = $('reviewBtn'), reviewPanel = $('reviewPanel');
   var mealBtns = [].slice.call(document.querySelectorAll('#mealWriter .meal-btn'));
   var sevBtns = [].slice.call(document.querySelectorAll('#symptomWriter .sev-btn'));
+  var bristolBtns = [].slice.call(document.querySelectorAll('#bathroomWriter .bristol-btn'));
 
   function flash(el, msg, ms, info) {
     el.textContent = msg || ''; el.className = 'status' + (info ? ' info' : '');
@@ -457,20 +519,29 @@
       var list = document.createElement('ul'); list.className = 'tickets';
       g.items.forEach(function (e) {
         var li = document.createElement('li');
-        li.className = 'ticket' + (e.kind === 'symptom' ? ' symptom' : '') + (e.pending ? ' pending' : '');
+        li.className = 'ticket' + (e.kind === 'symptom' ? ' symptom' : (e.kind === 'bathroom' ? ' bowel' : '')) + (e.pending ? ' pending' : '');
         var top = document.createElement('div'); top.className = 'ticket-top';
         var stamp = document.createElement('span');
         if (e.kind === 'meal') { stamp.className = 'stamp ' + e.meal; stamp.textContent = e.meal; }
+        else if (e.kind === 'bathroom') { stamp.className = 'stamp Bathroom'; stamp.textContent = 'Bathroom'; }
         else { stamp.className = 'stamp FeltOff'; stamp.textContent = 'Felt off'; }
         top.appendChild(stamp);
         if (e.pending) { var pt = document.createElement('span'); pt.className = 'pend-tag'; pt.textContent = 'Syncing'; top.appendChild(pt); }
         var time = document.createElement('span'); time.className = 'time'; time.textContent = timeLabel(e.ts);
         top.appendChild(time); li.appendChild(top);
 
-        var text = document.createElement('p'); text.className = 'ticket-text'; text.textContent = e.text; li.appendChild(text);
+        if (e.text) { var text = document.createElement('p'); text.className = 'ticket-text'; text.textContent = e.text; li.appendChild(text); }
 
         if (e.kind === 'meal' && e.amount) {
           var amt = document.createElement('div'); amt.className = 'amount-line'; amt.textContent = e.amount; li.appendChild(amt);
+        }
+
+        if (e.kind === 'bathroom') {
+          var bl = document.createElement('div'); bl.className = 'bristol-line';
+          var chip = document.createElement('span'); chip.className = 'bristol-chip'; chip.textContent = 'Type ' + e.bristol;
+          var band = document.createElement('span'); band.className = 'bristol-band ' + bandClass(e.bristol); band.textContent = bristolBand(e.bristol);
+          var desc = document.createElement('span'); desc.className = 'bristol-note'; desc.textContent = BRISTOL[e.bristol] || '';
+          bl.appendChild(chip); bl.appendChild(band); bl.appendChild(desc); li.appendChild(bl);
         }
 
         if (e.kind === 'symptom') {
@@ -531,6 +602,20 @@
     symptomInput.value = ''; symptomTime.value = toLocalInputValue();
     saveCache(); render(); refreshSyncPill(); symptomInput.focus(); flush();
   }
+  function addBathroom() {
+    var ts = tsFromInput(bathroomTime.value) || Date.now();
+    outbox.push({ op: 'append', kind: 'bathroom', tempId: 'tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2,7),
+      entry: { bristol: selectedBristol, text: bathroomInput.value.trim(), ts: ts } });
+    bathroomInput.value = ''; bathroomTime.value = toLocalInputValue();
+    saveCache(); render(); refreshSyncPill(); flash(bathroomStatus, 'Logged.', 2500, true); flush();
+  }
+  function updateBristolDesc() {
+    bristolDesc.innerHTML = '';
+    var strong = document.createElement('b'); strong.textContent = 'Type ' + selectedBristol + ' \u00b7 ';
+    var band = document.createElement('span'); band.className = bandClass(selectedBristol); band.textContent = bristolBand(selectedBristol);
+    var rest = document.createTextNode(' \u2014 ' + BRISTOL[selectedBristol]);
+    bristolDesc.appendChild(strong); bristolDesc.appendChild(band); bristolDesc.appendChild(rest);
+  }
   function deleteEntry(e) {
     if (e.pending) { outbox = outbox.filter(function (op) { return !(op.op === 'append' && op.tempId === e.id); }); }
     else { outbox.push({ op: 'delete', id: e.id }); }
@@ -539,9 +624,9 @@
 
   // ---- edit modal
   var editBack = $('editBack'), editText = $('editText'), editTime = $('editTime'), editAmount = $('editAmount');
-  var editMealWrap = $('editMealWrap'), editSevWrap = $('editSevWrap');
-  var editMealRow = $('editMealRow'), editSevRow = $('editSevRow'), editMsg = $('editMsg');
-  var editTarget = null, editMeal = null, editSev = null;
+  var editMealWrap = $('editMealWrap'), editSevWrap = $('editSevWrap'), editBristolWrap = $('editBristolWrap');
+  var editMealRow = $('editMealRow'), editSevRow = $('editSevRow'), editBristolRow = $('editBristolRow'), editMsg = $('editMsg');
+  var editTarget = null, editMeal = null, editSev = null, editBristol = null;
 
   function buildEditControls() {
     editMealRow.textContent = '';
@@ -557,16 +642,25 @@
       b.addEventListener('click', function () { editSev = n; [].slice.call(editSevRow.children).forEach(function (x) { x.classList.toggle('on', x === b); }); });
       editSevRow.appendChild(b);
     });
+    editBristolRow.textContent = '';
+    [1,2,3,4,5,6,7].forEach(function (n) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'bristol-btn'; b.setAttribute('data-b', n); b.textContent = String(n);
+      b.addEventListener('click', function () { editBristol = n; [].slice.call(editBristolRow.children).forEach(function (x) { x.classList.toggle('on', x === b); }); });
+      editBristolRow.appendChild(b);
+    });
   }
   function openEdit(e) {
     editTarget = e; editMsg.textContent = ''; editMsg.className = 'modal-msg';
-    editText.value = e.text; editTime.value = toLocalInputValue(new Date(e.ts));
+    editText.value = e.text || ''; editTime.value = toLocalInputValue(new Date(e.ts));
+    editMealWrap.style.display = 'none'; editSevWrap.style.display = 'none'; editBristolWrap.style.display = 'none';
     if (e.kind === 'meal') {
-      editMealWrap.style.display = ''; editSevWrap.style.display = 'none'; editMeal = e.meal;
-      editAmount.value = e.amount || '';
+      editMealWrap.style.display = ''; editMeal = e.meal; editAmount.value = e.amount || '';
       [].slice.call(editMealRow.children).forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-meal') === e.meal); });
+    } else if (e.kind === 'bathroom') {
+      editBristolWrap.style.display = ''; editBristol = e.bristol;
+      [].slice.call(editBristolRow.children).forEach(function (x) { x.classList.toggle('on', Number(x.getAttribute('data-b')) === e.bristol); });
     } else {
-      editMealWrap.style.display = 'none'; editSevWrap.style.display = ''; editSev = e.severity;
+      editSevWrap.style.display = ''; editSev = e.severity;
       [].slice.call(editSevRow.children).forEach(function (x) { x.classList.toggle('on', Number(x.getAttribute('data-sev')) === e.severity); });
     }
     editBack.classList.add('on');
@@ -575,14 +669,15 @@
   function saveEdit() {
     if (!editTarget) return;
     var text = editText.value.trim();
-    if (!text) { editMsg.className = 'modal-msg err'; editMsg.textContent = 'Description can\u2019t be empty.'; return; }
+    var isBathroom = editTarget.kind === 'bathroom';
+    if (!text && !isBathroom) { editMsg.className = 'modal-msg err'; editMsg.textContent = 'Description can\u2019t be empty.'; return; }
     var ts = tsFromInput(editTime.value) || editTarget.ts;
     var patch = { text: text, ts: ts };
     if (editTarget.kind === 'meal') { patch.meal = editMeal || editTarget.meal; patch.amount = editAmount.value.trim(); }
+    else if (isBathroom) { patch.bristol = editBristol || editTarget.bristol; }
     else patch.severity = editSev || editTarget.severity;
 
     if (editTarget.pending) {
-      // still queued as an append — edit that queued entry in place
       outbox.forEach(function (op) {
         if (op.op === 'append' && op.tempId === editTarget.id) { op.entry = Object.assign(op.entry, patch); }
       });
@@ -639,6 +734,7 @@
     var out = [];
     (res.meals || []).forEach(function (m) { out.push({ kind: 'meal', id: m.id, ts: Number(m.ts), text: m.text, meal: m.meal, amount: m.amount || '' }); });
     (res.symptoms || []).forEach(function (s) { out.push({ kind: 'symptom', id: s.id, ts: Number(s.ts), text: s.text, severity: Number(s.severity) }); });
+    (res.bathroom || []).forEach(function (b) { out.push({ kind: 'bathroom', id: b.id, ts: Number(b.ts), text: b.text || '', bristol: Number(b.bristol) }); });
     return out;
   }
 
@@ -735,7 +831,7 @@
       selectedMeal = meal;
       mealBtns.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-meal') === meal); });
     }
-    showTab(true);
+    showTab('meal');
     foodInput.focus();
   }
 
@@ -942,7 +1038,7 @@
       selectedMeal = p.meal;
       mealBtns.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-meal') === p.meal); });
     }
-    closeLibrary(); showTab(true); foodInput.focus();
+    closeLibrary(); showTab('meal'); foodInput.focus();
   }
 
   function renameProduct(p, name, meal) {
@@ -995,6 +1091,26 @@
       report.next_steps.forEach(function (step) { var li = document.createElement('li'); li.textContent = String(step); ul.appendChild(li); });
       reviewPanel.appendChild(h4); reviewPanel.appendChild(ul);
     }
+
+    var ins = report.eating_insights;
+    if (ins && (ins.overview || (Array.isArray(ins.observations) && ins.observations.length) || (Array.isArray(ins.watch_for) && ins.watch_for.length))) {
+      var divider = document.createElement('div'); divider.className = 'insights-divider'; reviewPanel.appendChild(divider);
+      var hi = document.createElement('h3'); hi.textContent = 'Eating insights'; reviewPanel.appendChild(hi);
+      if (ins.overview) { var ov = document.createElement('p'); ov.textContent = String(ins.overview); reviewPanel.appendChild(ov); }
+      if (Array.isArray(ins.observations) && ins.observations.length) {
+        var ho = document.createElement('h3'); ho.className = 'sub'; ho.textContent = 'What your log shows';
+        var ulo = document.createElement('ul');
+        ins.observations.forEach(function (o) { var li = document.createElement('li'); li.textContent = String(o); ulo.appendChild(li); });
+        reviewPanel.appendChild(ho); reviewPanel.appendChild(ulo);
+      }
+      if (Array.isArray(ins.watch_for) && ins.watch_for.length) {
+        var hw = document.createElement('h3'); hw.className = 'sub'; hw.textContent = 'Worth watching';
+        var ulw = document.createElement('ul');
+        ins.watch_for.forEach(function (w) { var li = document.createElement('li'); li.textContent = String(w); ulw.appendChild(li); });
+        reviewPanel.appendChild(hw); reviewPanel.appendChild(ulw);
+      }
+    }
+
     var disc = document.createElement('p'); disc.className = 'disclaimer';
     disc.textContent = 'These are correlations in your own log, not a medical diagnosis. For persistent, severe, or worsening symptoms, talk to a doctor.';
     reviewPanel.appendChild(disc); reviewPanel.style.display = 'block';
@@ -1016,25 +1132,37 @@
   });
 
   // ================= tabs / inputs =================
-  var tabMeal = $('tabMeal'), tabSymptom = $('tabSymptom'), mealWriter = $('mealWriter'), symptomWriter = $('symptomWriter');
-  function showTab(meal) {
-    tabMeal.classList.toggle('on', meal); tabSymptom.classList.toggle('on', !meal);
-    tabMeal.setAttribute('aria-selected', String(meal)); tabSymptom.setAttribute('aria-selected', String(!meal));
-    mealWriter.style.display = meal ? 'block' : 'none';
-    symptomWriter.style.display = meal ? 'none' : 'block';
-    if (meal && !mealTime.value) mealTime.value = toLocalInputValue();
-    if (!meal && !symptomTime.value) symptomTime.value = toLocalInputValue();
+  var tabMeal = $('tabMeal'), tabSymptom = $('tabSymptom'), tabBathroom = $('tabBathroom');
+  var mealWriter = $('mealWriter'), symptomWriter = $('symptomWriter'), bathroomWriter = $('bathroomWriter');
+  function showTab(which) {
+    tabMeal.classList.toggle('on', which === 'meal');
+    tabSymptom.classList.toggle('on', which === 'symptom');
+    tabBathroom.classList.toggle('on', which === 'bathroom');
+    tabMeal.setAttribute('aria-selected', String(which === 'meal'));
+    tabSymptom.setAttribute('aria-selected', String(which === 'symptom'));
+    tabBathroom.setAttribute('aria-selected', String(which === 'bathroom'));
+    mealWriter.style.display = which === 'meal' ? 'block' : 'none';
+    symptomWriter.style.display = which === 'symptom' ? 'block' : 'none';
+    bathroomWriter.style.display = which === 'bathroom' ? 'block' : 'none';
+    if (which === 'meal' && !mealTime.value) mealTime.value = toLocalInputValue();
+    if (which === 'symptom' && !symptomTime.value) symptomTime.value = toLocalInputValue();
+    if (which === 'bathroom' && !bathroomTime.value) bathroomTime.value = toLocalInputValue();
   }
-  tabMeal.addEventListener('click', function () { showTab(true); });
-  tabSymptom.addEventListener('click', function () { showTab(false); });
+  tabMeal.addEventListener('click', function () { showTab('meal'); });
+  tabSymptom.addEventListener('click', function () { showTab('symptom'); });
+  tabBathroom.addEventListener('click', function () { showTab('bathroom'); });
   mealBtns.forEach(function (b) { b.addEventListener('click', function () { selectedMeal = b.getAttribute('data-meal'); mealBtns.forEach(function (x) { x.classList.toggle('on', x === b); }); }); });
   sevBtns.forEach(function (b) { b.addEventListener('click', function () { selectedSev = parseInt(b.getAttribute('data-sev'), 10); sevBtns.forEach(function (x) { x.classList.toggle('on', x === b); }); }); });
+  bristolBtns.forEach(function (b) { b.addEventListener('click', function () { selectedBristol = parseInt(b.getAttribute('data-b'), 10); bristolBtns.forEach(function (x) { x.classList.toggle('on', x === b); }); updateBristolDesc(); }); });
   $('mealNowBtn').addEventListener('click', function () { mealTime.value = toLocalInputValue(); });
   $('symNowBtn').addEventListener('click', function () { symptomTime.value = toLocalInputValue(); });
+  $('bathNowBtn').addEventListener('click', function () { bathroomTime.value = toLocalInputValue(); });
   $('addMealBtn').addEventListener('click', addMeal);
   $('addSymptomBtn').addEventListener('click', addSymptom);
+  $('addBathroomBtn').addEventListener('click', addBathroom);
   foodInput.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') addMeal(); });
   symptomInput.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') addSymptom(); });
+  bathroomInput.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') addBathroom(); });
   syncPill.addEventListener('click', function () { flush(); });
 
   // ================= settings modal =================
@@ -1069,6 +1197,8 @@
   try { console.log('Ticket Rail frontend ' + APP_BUILD); } catch (e) {}
   mealTime.value = toLocalInputValue();
   symptomTime.value = toLocalInputValue();
+  bathroomTime.value = toLocalInputValue();
+  updateBristolDesc();
   loadLocal(); render(); refreshSyncPill();
   if (!cfg) openModal(); else flush();
 

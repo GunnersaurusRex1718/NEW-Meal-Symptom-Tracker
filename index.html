@@ -60,6 +60,11 @@
   .writer-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #77828B; margin-bottom: 8px; }
   .symptom-writer .writer-label { color: #A98782; }
   .food-input { width: 100%; }
+  .dup-hint { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 8px 10px; background: #FBF3D9; border: 1px solid #E7AF12; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5A4B12; }
+  .dup-hint .dup-q { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+  .dup-hint .dup-q b { font-weight: 600; }
+  .dup-use { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; background: #E7AF12; color: #23211C; border: none; padding: 4px 10px; border-radius: 2px; cursor: pointer; white-space: nowrap; }
+  .dup-x { background: transparent; border: none; color: #8A7A2E; font-size: 16px; cursor: pointer; padding: 0 4px; line-height: 1; }
   .tool-row { display: flex; gap: 8px; margin-top: 10px; }
   .tool-row .scan-btn { flex: 1; justify-content: center; }
   .writer input[type="text"] { width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #23211C; background: transparent; border: none; border-bottom: 2px dashed #B8B3A4; padding: 6px 2px 8px; outline: none; }
@@ -262,6 +267,7 @@
     <div class="writer" id="mealWriter">
       <div class="writer-label">New meal ticket</div>
       <input type="text" id="foodInput" class="food-input" placeholder="e.g. two eggs over easy, rye toast" maxlength="300" aria-label="What did you eat?">
+      <div class="dup-hint" id="dupHint" style="display:none" aria-live="polite"></div>
       <div class="tool-row">
         <button class="scan-btn" id="scanBtn" type="button" aria-label="Scan a UPC barcode">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h2v16H2V4zm3 0h1v16H5V4zm2 0h2v16H7V4zm3 0h1v16h-1V4zm3 0h2v16h-2V4zm3 0h1v16h-1V4zm2 0h3v16h-3V4z"/></svg>
@@ -473,7 +479,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v3.3-picker-glance';
+  var APP_BUILD = 'fe-v3.4-dupcatch';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var VALID_MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Other'];
@@ -560,17 +566,21 @@
   // Local "This week" glance — computed from the cache, costs no API call.
   function renderWeekly(all) {
     if (!cfg || !all || !all.length) return;
-    var since = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    var wk = all.filter(function (e) { return e.ts >= since; });
+    var now = new Date();
+    var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    var windowStart = todayStart - 6 * 24 * 60 * 60 * 1000;   // 7 calendar days including today
+    var wk = all.filter(function (e) { return e.ts >= windowStart; });
     if (!wk.length) return;
 
     var meals = wk.filter(function (e) { return e.kind === 'meal'; });
     var symps = wk.filter(function (e) { return e.kind === 'symptom'; });
     var bms = wk.filter(function (e) { return e.kind === 'bathroom'; });
 
-    var days = {};
-    wk.forEach(function (e) { days[dayKey(e.ts)] = true; });
-    var daysLogged = Object.keys(days).length;
+    // How many of the last 7 calendar days have at least one entry (0-7, never more).
+    var validDays = {};
+    for (var i = 0; i < 7; i++) { validDays[dayKey(todayStart - i * 24 * 60 * 60 * 1000)] = false; }
+    wk.forEach(function (e) { var k = dayKey(e.ts); if (k in validDays) validDays[k] = true; });
+    var daysLogged = Object.keys(validDays).filter(function (k) { return validDays[k]; }).length;
 
     // top foods by frequency (normalized meal text)
     var freq = {};
@@ -722,6 +732,7 @@
     pendingUpc = null; pendingUpcSave = false; pendingBrand = ''; pendingIngredients = '';
     pendingDishName = null; pendingDishIngredients = '';
     foodInput.value = ''; amountInput.value = ''; mealTime.value = toLocalInputValue();
+    dupSuppressed = ''; hideDupHint();
     saveCache(); render(); refreshSyncPill(); foodInput.focus(); flush();
   }
   function addSymptom() {
@@ -969,6 +980,7 @@
     }
     showTab('meal');
     foodInput.focus();
+    hideDupHint();
   }
 
   // Returns {found:true,name} | {found:false} | {error:'busy'|'network'}.
@@ -1125,6 +1137,7 @@
     var conf = String(dish.confidence || '');
     flash(mealStatus, 'Identified: ' + (name || '?') + (conf ? (' (' + conf + ' confidence)') : '') + '. Check it, then Add.', 9000, true);
     foodInput.focus();
+    hideDupHint();
   }
 
   $('photoBtn').addEventListener('click', function () {
@@ -1264,7 +1277,7 @@
       selectedMeal = p.meal;
       mealBtns.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-meal') === p.meal); });
     }
-    closeLibrary(); showTab('meal'); foodInput.focus();
+    closeLibrary(); showTab('meal'); foodInput.focus(); hideDupHint();
   }
 
   function renameProduct(p, name, meal) {
@@ -1288,6 +1301,69 @@
   $('libClose').addEventListener('click', closeLibrary);
   libBack.addEventListener('click', function (ev) { if (ev.target === libBack) closeLibrary(); });
   libSearch.addEventListener('input', renderLibrary);
+
+  // ================= Duplicate catcher =================
+  // As you type a meal, surface "did you mean [existing item]?" so the same food isn't
+  // logged under slightly different names (which would fragment it in the review + library).
+  var dupHint = $('dupHint'), dupSuppressed = '';
+
+  function nameSimilarity(a, b) {   // a, b already normalized via normName
+    if (a === b) return 1;
+    var ta = a.split(' '), tb = b.split(' ');
+    var setb = {}; tb.forEach(function (t) { if (t) setb[t] = true; });
+    var inter = 0, seen = {};
+    ta.forEach(function (t) { if (t && setb[t] && !seen[t]) { inter++; seen[t] = true; } });
+    var uni = {}; ta.concat(tb).forEach(function (t) { if (t) uni[t] = true; });
+    var jac = Object.keys(uni).length ? inter / Object.keys(uni).length : 0;
+    var shorter = a.length <= b.length ? a : b, longer = a.length <= b.length ? b : a;
+    var contain = (shorter.length >= 4 && longer.indexOf(shorter) >= 0) ? 0.6 : 0;
+    return Math.max(jac, contain);
+  }
+
+  function bestLibMatch(text) {
+    var t = normName(text);
+    if (t.length < 4) return null;
+    var items = libraryView(), best = null, bestScore = 0;
+    for (var i = 0; i < items.length; i++) {
+      var n = normName(items[i].name); if (!n) continue;
+      if (n === t) return null;                 // already the canonical name — nothing to suggest
+      var score = nameSimilarity(t, n);
+      if (score > bestScore) { bestScore = score; best = items[i]; }
+    }
+    return (bestScore >= 0.5 && best) ? best : null;
+  }
+
+  function hideDupHint() { dupHint.style.display = 'none'; dupHint.textContent = ''; }
+
+  function updateDupHint() {
+    var text = foodInput.value.trim();
+    if (!text || normName(text) === dupSuppressed) { hideDupHint(); return; }
+    var match = bestLibMatch(text);
+    if (!match) { hideDupHint(); return; }
+    dupHint.textContent = '';
+    var q = document.createElement('span'); q.className = 'dup-q';
+    q.appendChild(document.createTextNode('Did you mean '));
+    var nm = document.createElement('b'); nm.textContent = match.name; q.appendChild(nm);
+    q.appendChild(document.createTextNode('?'));
+    var use = document.createElement('button'); use.type = 'button'; use.className = 'dup-use'; use.textContent = 'Use';
+    use.addEventListener('click', function () { adoptMatch(match); });
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'dup-x'; x.setAttribute('aria-label', 'Dismiss'); x.textContent = '\u00d7';
+    x.addEventListener('click', function () { dupSuppressed = normName(foodInput.value.trim()); hideDupHint(); });
+    dupHint.appendChild(q); dupHint.appendChild(use); dupHint.appendChild(x);
+    dupHint.style.display = 'flex';
+  }
+
+  function adoptMatch(match) {
+    foodInput.value = match.name;
+    if (match.meal && VALID_MEALS.indexOf(match.meal) >= 0) {
+      selectedMeal = match.meal;
+      mealBtns.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-meal') === match.meal); });
+    }
+    dupSuppressed = normName(match.name);
+    hideDupHint(); foodInput.focus();
+  }
+
+  foodInput.addEventListener('input', updateDupHint);
 
   // ================= Chef's review =================
   function renderReview(report) {

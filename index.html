@@ -239,6 +239,8 @@
 
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
   @media (max-width: 420px) { .brand { font-size: 28px; } .meal-btn { padding: 6px 9px; font-size: 13px; } }
+
+  .cfg-tools { margin-top: 14px; display: flex; gap: 8px; }
 </style>
 </head>
 <body>
@@ -388,7 +390,34 @@
       <button class="btn-primary" id="cfgSave" type="button">Test &amp; save</button>
     </div>
     <div class="modal-msg" id="cfgMsg"></div>
+    <div class="cfg-tools">
+      <button class="btn-ghost" id="openExportBtn" type="button">Export report&hellip;</button>
+    </div>
     <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #B8B3A4;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:#A8A395">App build <span id="feBuild"></span> &middot; backend build shown at your /exec URL</div>
+  </div>
+</div>
+
+<!-- Export report -->
+<div class="modal-back" id="exportBack">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
+    <h2 id="exportTitle">Export report</h2>
+    <p class="note">Builds a clean, printable summary of your log — meals, symptoms, and bowel movements — to save as PDF or hand to a clinician. Everything stays on your device.</p>
+    <div class="field-label">Range</div>
+    <div class="opt-group" id="exportRangeGroup" role="group" aria-label="Date range">
+      <button class="opt-btn on" data-range="all" type="button">All history</button>
+      <button class="opt-btn" data-range="custom" type="button">Pick dates</button>
+    </div>
+    <div id="exportDates" style="display:none;margin-top:12px">
+      <label for="exportFrom">From</label>
+      <input type="date" id="exportFrom">
+      <label for="exportTo" style="margin-top:8px">To</label>
+      <input type="date" id="exportTo">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-ghost" id="exportCancel" type="button">Cancel</button>
+      <button class="btn-primary" id="exportGo" type="button">Generate</button>
+    </div>
+    <div class="modal-msg" id="exportMsg"></div>
   </div>
 </div>
 
@@ -479,7 +508,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v3.4-dupcatch';
+  var APP_BUILD = 'fe-v3.5-export';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var VALID_MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Other'];
@@ -1559,6 +1588,123 @@
 
   window.addEventListener('online', function () { flush(); });
   window.addEventListener('offline', function () { refreshSyncPill(); });
+
+  // ================= Export report =================
+  var exportBack = $('exportBack'), exportMsg = $('exportMsg'), exportDates = $('exportDates');
+  var exportFrom = $('exportFrom'), exportTo = $('exportTo'), exportRange = 'all';
+  var exportRangeBtns = [].slice.call(document.querySelectorAll('#exportRangeGroup .opt-btn'));
+
+  function openExport() {
+    exportMsg.textContent = ''; exportMsg.className = 'modal-msg';
+    exportRange = 'all';
+    exportRangeBtns.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-range') === 'all'); });
+    exportDates.style.display = 'none';
+    // default custom range: last 30 days -> today
+    var today = new Date(); var prior = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000);
+    exportTo.value = toDateInput(today); exportFrom.value = toDateInput(prior);
+    closeModal(); exportBack.classList.add('on');
+  }
+  function closeExport() { exportBack.classList.remove('on'); }
+  function toDateInput(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+
+  exportRangeBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      exportRange = b.getAttribute('data-range');
+      exportRangeBtns.forEach(function (x) { x.classList.toggle('on', x === b); });
+      exportDates.style.display = (exportRange === 'custom') ? 'block' : 'none';
+    });
+  });
+  $('openExportBtn').addEventListener('click', openExport);
+  $('exportCancel').addEventListener('click', closeExport);
+  exportBack.addEventListener('click', function (ev) { if (ev.target === exportBack) closeExport(); });
+  $('exportGo').addEventListener('click', function () {
+    if (!cfg) { exportMsg.className = 'modal-msg err'; exportMsg.textContent = 'Connect your rail first.'; return; }
+    var from = 0, to = Infinity, label = 'All history';
+    if (exportRange === 'custom') {
+      var f = tsFromInput(exportFrom.value ? (exportFrom.value + 'T00:00') : '');
+      var t = tsFromInput(exportTo.value ? (exportTo.value + 'T23:59') : '');
+      if (!f || !t) { exportMsg.className = 'modal-msg err'; exportMsg.textContent = 'Pick both dates.'; return; }
+      if (f > t) { exportMsg.className = 'modal-msg err'; exportMsg.textContent = 'From date is after To date.'; return; }
+      from = f; to = t; label = fmtDate(f) + ' \u2013 ' + fmtDate(t);
+    }
+    var html = buildReportHTML(from, to, label);
+    if (!html) { exportMsg.className = 'modal-msg err'; exportMsg.textContent = 'No entries in that range.'; return; }
+    // Open the report as its own page (opens in Safari from an installed PWA), where Print /
+    // Save-to-PDF works reliably. Must be synchronous within the click to avoid popup blocking.
+    var win = window.open('', '_blank');
+    if (!win) { exportMsg.className = 'modal-msg err'; exportMsg.textContent = 'Allow pop-ups for this site, then try again.'; return; }
+    win.document.open(); win.document.write(html); win.document.close();
+    exportMsg.className = 'modal-msg ok'; exportMsg.textContent = 'Report opened in a new tab — use Share / Print to save as PDF.';
+    if (navigator.onLine) flush();   // keep the cache fresh for next time (doesn't affect this report)
+  });
+
+  function fmtDate(ts) { return new Date(ts).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  function buildReportHTML(from, to, rangeLabel) {
+    var all = viewEntries().filter(function (e) { return e.ts >= from && e.ts <= to; });
+    if (!all.length) return '';
+    all.sort(function (a, b) { return a.ts - b.ts; });
+
+    var meals = all.filter(function (e) { return e.kind === 'meal'; });
+    var symps = all.filter(function (e) { return e.kind === 'symptom'; });
+    var bms = all.filter(function (e) { return e.kind === 'bathroom'; });
+    var dayset = {}; all.forEach(function (e) { dayset[dayKey(e.ts)] = true; });
+
+    var rows = [];
+    rows.push('<div class="k"><b>Entries:</b> ' + all.length + '</div>');
+    rows.push('<div class="k"><b>Days with entries:</b> ' + Object.keys(dayset).length + '</div>');
+    rows.push('<div class="k"><b>Meals:</b> ' + meals.length + '</div>');
+    if (symps.length) {
+      var avg = symps.reduce(function (a, e) { return a + (e.severity || 0); }, 0) / symps.length;
+      rows.push('<div class="k"><b>Feeling-off entries:</b> ' + symps.length + ' (avg severity ' + avg.toFixed(1) + '/5)</div>');
+    } else { rows.push('<div class="k"><b>Feeling-off entries:</b> 0</div>'); }
+    if (bms.length) {
+      var bands = { Normal: 0, Constipation: 0, Loose: 0 };
+      bms.forEach(function (e) { bands[bristolBand(e.bristol)]++; });
+      rows.push('<div class="k"><b>Bowel movements:</b> ' + bms.length + ' (' + bands.Normal + ' normal, ' + bands.Loose + ' loose, ' + bands.Constipation + ' constipation)</div>');
+    } else { rows.push('<div class="k"><b>Bowel movements:</b> 0</div>'); }
+    var freq = {};
+    meals.forEach(function (e) { var n = normName(e.text); if (!n) return; if (!freq[n]) freq[n] = { c: 0, label: e.text }; freq[n].c++; });
+    var top = Object.keys(freq).map(function (k) { return freq[k]; }).sort(function (a, b) { return b.c - a.c; }).slice(0, 5);
+    if (top.length) rows.push('<div class="k" style="grid-column:1/3"><b>Most-logged foods:</b> ' + esc(top.map(function (t) { return t.label + (t.c > 1 ? ' (\u00d7' + t.c + ')' : ''); }).join(', ')) + '</div>');
+
+    var groups = [], byKey = {};
+    all.forEach(function (e) { var k = dayKey(e.ts); if (!byKey[k]) { byKey[k] = { ts: e.ts, items: [] }; groups.push(byKey[k]); } byKey[k].items.push(e); });
+    var dayHtml = groups.map(function (g) {
+      var head = new Date(g.ts).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      var trs = g.items.map(function (e) {
+        var type, detail;
+        if (e.kind === 'meal') { type = esc(e.meal || 'Meal'); detail = esc(e.text) + (e.amount ? ('  &mdash;  ' + esc(e.amount)) : ''); }
+        else if (e.kind === 'bathroom') { type = 'Bathroom'; detail = 'Bristol type ' + e.bristol + ' (' + bristolBand(e.bristol) + ')' + (e.text ? ('  &mdash;  ' + esc(e.text)) : ''); }
+        else { type = 'Felt off'; detail = 'Severity ' + (e.severity || '?') + '/5  &mdash;  ' + esc(e.text); }
+        return '<tr><td class="t">' + esc(timeLabel(e.ts)) + '</td><td class="ty">' + type + '</td><td>' + detail + '</td></tr>';
+      }).join('');
+      return '<div class="day"><div class="dh">' + esc(head) + '</div><table>' + trs + '</table></div>';
+    }).join('');
+
+    var css = 'body{color:#000;font-family:Georgia,serif;font-size:12px;line-height:1.45;margin:24px;}' +
+      'h1{font-family:Arial,sans-serif;font-size:20px;margin:0 0 2px;}.sub{font-family:Arial,sans-serif;font-size:12px;color:#333;margin-bottom:14px;}' +
+      'h2{font-family:Arial,sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #000;padding-bottom:3px;margin:18px 0 8px;}' +
+      '.sum{display:grid;grid-template-columns:1fr 1fr;gap:3px 24px;}.k{font-size:12px;}' +
+      '.day{margin-top:12px;page-break-inside:avoid;}.dh{font-family:Arial,sans-serif;font-weight:bold;font-size:12px;background:#f0f0f0;padding:3px 6px;border-left:3px solid #000;}' +
+      'table{width:100%;border-collapse:collapse;margin-top:3px;}td{padding:3px 6px;vertical-align:top;border-bottom:1px solid #ddd;}' +
+      'td.t{width:64px;white-space:nowrap;color:#444;font-family:Arial,sans-serif;font-size:11px;}td.ty{width:96px;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;}' +
+      '.foot{margin-top:20px;padding-top:8px;border-top:1px solid #000;font-size:10.5px;color:#333;}' +
+      '.pbar{position:sticky;top:0;background:#20282E;padding:10px;text-align:center;}' +
+      '.pbar button{font-family:Arial,sans-serif;font-size:14px;font-weight:bold;background:#E7AF12;color:#20282E;border:none;padding:8px 20px;border-radius:3px;cursor:pointer;}' +
+      '@media print{.pbar{display:none;}body{margin:0;}@page{margin:14mm;}}';
+
+    return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>Ticket Rail — Log Export</title><style>' + css + '</style></head><body>' +
+      '<div class="pbar"><button onclick="window.print()">Print / Save as PDF</button></div>' +
+      '<h1>Food, Symptom &amp; Digestion Log</h1>' +
+      '<div class="sub">' + esc(rangeLabel) + '  &middot;  generated ' + esc(fmtDate(Date.now())) + '</div>' +
+      '<h2>Summary</h2><div class="sum">' + rows.join('') + '</div>' +
+      '<h2>Daily log</h2>' + dayHtml +
+      '<div class="foot">Self-tracked log generated by The Ticket Rail. This is a personal record, not a medical document or diagnosis.</div>' +
+      '</body></html>';
+  }
 
   // ================= boot =================
   try { var fb = document.getElementById('feBuild'); if (fb) fb.textContent = APP_BUILD; } catch (e) {}

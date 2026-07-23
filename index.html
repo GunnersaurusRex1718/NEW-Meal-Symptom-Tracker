@@ -182,6 +182,8 @@
   .week-head { display: flex; align-items: baseline; gap: 10px; }
   .week-title { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 17px; letter-spacing: 2.5px; text-transform: uppercase; color: #F5F3EA; }
   .week-days { margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #9AA6AE; letter-spacing: 0.5px; }
+  .week-toggle { display: flex; gap: 6px; margin-top: 10px; }
+  .week-toggle .opt-btn { flex: 1; padding: 4px 6px; font-size: 12px; letter-spacing: 0.5px; }
   .week-counts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
   .week-chip { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #DCE3E8; background: #1B2227; border: 1px solid #37424A; border-radius: 20px; padding: 4px 12px; }
   .week-chip b { font-family: 'Saira Condensed', sans-serif; font-size: 15px; margin-right: 3px; }
@@ -508,9 +510,14 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v3.5-export';
+  var APP_BUILD = 'fe-v3.6-glance-period';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
+  var GLANCE_KEY = 'ticketrail.glance';   // remembers the glance period between opens
+  var glancePeriod = (function () {
+    try { var v = localStorage.getItem(GLANCE_KEY); return (v === '7' || v === '30' || v === 'all') ? v : '7'; }
+    catch (e) { return '7'; }
+  })();
   var VALID_MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Other'];
   var SEV_WORDS = { 1: 'Mild', 2: 'Mild-moderate', 3: 'Moderate', 4: 'Strong', 5: 'Severe' };
   var BRISTOL = { 1: 'Separate hard lumps', 2: 'Lumpy, sausage-shaped', 3: 'Sausage with cracks', 4: 'Smooth, soft sausage', 5: 'Soft blobs, clear edges', 6: 'Mushy, ragged edges', 7: 'Liquid, no solids' };
@@ -592,24 +599,37 @@
     return list;
   }
 
-  // Local "This week" glance — computed from the cache, costs no API call.
+  // Local glance — computed from the cache, costs no API call. Period: '7' | '30' | 'all'.
+  var GLANCE_TITLES = { '7': 'This week', '30': 'Last 30 days', 'all': 'All time' };
+
   function renderWeekly(all) {
     if (!cfg || !all || !all.length) return;
+    var DAY = 24 * 60 * 60 * 1000;
     var now = new Date();
     var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    var windowStart = todayStart - 6 * 24 * 60 * 60 * 1000;   // 7 calendar days including today
-    var wk = all.filter(function (e) { return e.ts >= windowStart; });
-    if (!wk.length) return;
 
+    // Window + denominator for "days logged", per selected period.
+    var windowStart, denomDays;
+    if (glancePeriod === 'all') {
+      var firstTs = all.reduce(function (m, e) { return e.ts < m ? e.ts : m; }, all[0].ts);
+      var f = new Date(firstTs);
+      var firstDayStart = new Date(f.getFullYear(), f.getMonth(), f.getDate()).getTime();
+      windowStart = -Infinity;
+      denomDays = Math.max(1, Math.round((todayStart - firstDayStart) / DAY) + 1);
+    } else {
+      denomDays = (glancePeriod === '30') ? 30 : 7;
+      windowStart = todayStart - (denomDays - 1) * DAY;   // N calendar days including today
+    }
+
+    var wk = all.filter(function (e) { return e.ts >= windowStart; });
     var meals = wk.filter(function (e) { return e.kind === 'meal'; });
     var symps = wk.filter(function (e) { return e.kind === 'symptom'; });
     var bms = wk.filter(function (e) { return e.kind === 'bathroom'; });
 
-    // How many of the last 7 calendar days have at least one entry (0-7, never more).
-    var validDays = {};
-    for (var i = 0; i < 7; i++) { validDays[dayKey(todayStart - i * 24 * 60 * 60 * 1000)] = false; }
-    wk.forEach(function (e) { var k = dayKey(e.ts); if (k in validDays) validDays[k] = true; });
-    var daysLogged = Object.keys(validDays).filter(function (k) { return validDays[k]; }).length;
+    // Distinct calendar days with at least one entry, clamped so it can never exceed the window.
+    var seen = {};
+    wk.forEach(function (e) { seen[dayKey(e.ts)] = true; });
+    var daysLogged = Math.min(Object.keys(seen).length, denomDays);
 
     // top foods by frequency (normalized meal text)
     var freq = {};
@@ -627,9 +647,37 @@
 
     var card = document.createElement('section'); card.className = 'week-card';
     var head = document.createElement('div'); head.className = 'week-head';
-    var title = document.createElement('span'); title.className = 'week-title'; title.textContent = 'This week';
-    var dl = document.createElement('span'); dl.className = 'week-days'; dl.textContent = 'Logged ' + daysLogged + ' of 7 days';
-    head.appendChild(title); head.appendChild(dl); card.appendChild(head);
+    var title = document.createElement('span'); title.className = 'week-title'; title.textContent = GLANCE_TITLES[glancePeriod];
+    head.appendChild(title);
+    if (wk.length) {
+      var dl = document.createElement('span'); dl.className = 'week-days';
+      dl.textContent = 'Logged ' + daysLogged + ' of ' + denomDays + ' days';
+      head.appendChild(dl);
+    }
+    card.appendChild(head);
+
+    // period toggle
+    var toggle = document.createElement('div'); toggle.className = 'week-toggle'; toggle.setAttribute('role', 'group'); toggle.setAttribute('aria-label', 'Stats period');
+    [['7', '7 days'], ['30', '30 days'], ['all', 'All time']].forEach(function (p) {
+      var b = document.createElement('button'); b.type = 'button';
+      b.className = 'opt-btn' + (glancePeriod === p[0] ? ' on' : '');
+      b.textContent = p[1];
+      b.setAttribute('aria-pressed', String(glancePeriod === p[0]));
+      b.addEventListener('click', function () {
+        if (glancePeriod === p[0]) return;
+        glancePeriod = p[0];
+        try { localStorage.setItem(GLANCE_KEY, glancePeriod); } catch (e) {}
+        render();
+      });
+      toggle.appendChild(b);
+    });
+    card.appendChild(toggle);
+
+    if (!wk.length) {
+      var none = document.createElement('div'); none.className = 'week-line';
+      none.textContent = 'No entries in this period.';
+      card.appendChild(none); logEl.appendChild(card); return;
+    }
 
     var counts = document.createElement('div'); counts.className = 'week-counts';
     function chip(n, label, cls) {

@@ -243,6 +243,52 @@
   @media (max-width: 420px) { .brand { font-size: 28px; } .meal-btn { padding: 6px 9px; font-size: 13px; } }
 
   .cfg-tools { margin-top: 14px; display: flex; gap: 8px; }
+
+  /* Symptom type picker */
+  .tabs { flex-wrap: wrap; }
+  .tab.on.tab-daily { background: #E2ECDF; color: #3F6B3A; }
+  .sym-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .sym-chip { font-family: 'Saira Condensed', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: 0.5px; background: transparent; border: 2px solid #DCC0BE; color: #8A5250; padding: 5px 11px; border-radius: 2px; cursor: pointer; }
+  .sym-chip.on { background: #A03332; border-color: #A03332; color: #FDF7F6; }
+  .sym-chip:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
+  .sym-tools { display: flex; gap: 14px; margin-top: 8px; }
+  .sym-link { background: none; border: none; padding: 0; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.5px; color: #A0706E; text-decoration: underline; cursor: pointer; }
+  .sym-link:hover { color: #A03332; }
+  .sym-add-row { display: flex; gap: 8px; }
+  .sym-add-row input { flex: 1; }
+  .sym-daily-check { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #4E5860; text-transform: none; letter-spacing: 0; }
+  .sym-mgr-row { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid #E4DFD0; }
+  .sym-mgr-row:last-child { border-bottom: none; }
+  .sym-mgr-name { flex: 1; font-family: 'IBM Plex Mono', monospace; font-size: 13px; overflow-wrap: anywhere; }
+  .sym-mgr-daily { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; border: 1px solid #B8B3A4; color: #77828B; background: transparent; padding: 2px 7px; border-radius: 2px; cursor: pointer; white-space: nowrap; }
+  .sym-mgr-daily.on { border-color: #3F6B3A; color: #3F6B3A; background: #E9F1E7; }
+
+  /* Daily check-in writer */
+  .writer.daily-writer { background: #E2ECDF; display: none; }
+  .daily-writer .writer-label { color: #5E7F59; }
+  .daily-writer .field-label { color: #5E7F59; }
+  .daily-writer input[type="text"] { border-bottom-color: #B7CDB3; }
+  .daily-writer input[type="date"], .daily-writer input[type="number"] { font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #23211C; background: #F2F7F1; border: 2px solid #B7CDB3; border-radius: 2px; padding: 8px; }
+  .daily-writer .add-btn { background: #3F6B3A; box-shadow: 2px 2px 0 #B7CDB3; }
+  .daily-note { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5E7F59; margin: 4px 0 0; line-height: 1.5; }
+  .sleep-row { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+  .sleep-row input[type="number"] { width: 74px; }
+  .scale-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+  .scale-btn { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 15px; width: 38px; height: 34px; background: transparent; border: 2px solid #B7CDB3; color: #5E7F59; border-radius: 2px; cursor: pointer; }
+  .scale-btn.on { background: #3F6B3A; border-color: #3F6B3A; color: #F2F7F1; }
+  .scale-btn.none { width: auto; padding: 0 9px; font-size: 12px; letter-spacing: 1px; }
+  .scale-btn:focus-visible { outline: 3px solid #E7AF12; outline-offset: 2px; }
+  .scale-hint { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #7C9877; margin-top: 5px; }
+  .daily-sym { margin-top: 10px; }
+  .daily-sym-name { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #3F5A3B; }
+
+  /* Check-in ticket */
+  .ticket.daily { background: #E2ECDF; }
+  .ticket.daily::before { background-image: radial-gradient(circle at 6px 0px, transparent 5px, #E2ECDF 5px); }
+  .stamp.Daily { color: #F2F7F1; background: #3F6B3A; border-color: #3F6B3A; }
+  .daily-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .daily-fact { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #3F5A3B; border: 1px solid #B7CDB3; border-radius: 20px; padding: 2px 9px; }
+  .daily-fact b { font-family: 'Saira Condensed', sans-serif; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -263,8 +309,9 @@
 
     <div class="tabs" role="tablist" aria-label="Entry type">
       <button class="tab on" id="tabMeal" type="button" role="tab" aria-selected="true">Meal</button>
-      <button class="tab tab-symptom" id="tabSymptom" type="button" role="tab" aria-selected="false">Feeling off</button>
+      <button class="tab tab-symptom" id="tabSymptom" type="button" role="tab" aria-selected="false">Symptom</button>
       <button class="tab tab-bowel" id="tabBathroom" type="button" role="tab" aria-selected="false">Bathroom</button>
+      <button class="tab tab-daily" id="tabDaily" type="button" role="tab" aria-selected="false">Daily</button>
     </div>
 
     <!-- Meal writer -->
@@ -308,8 +355,15 @@
 
     <!-- Symptom writer -->
     <div class="writer symptom-writer" id="symptomWriter">
-      <div class="writer-label">Feeling-off ticket</div>
-      <input type="text" id="symptomInput" placeholder="e.g. bloated and headachy, low energy" maxlength="300" aria-label="Describe how you feel">
+      <div class="writer-label">Symptom ticket</div>
+      <div class="field-label">What's going on</div>
+      <div class="sym-picker" id="symPicker" role="group" aria-label="Symptom"></div>
+      <div class="sym-tools">
+        <button class="sym-link" id="symAddTypeBtn" type="button">+ Add symptom</button>
+        <button class="sym-link" id="symManageBtn" type="button">Manage list</button>
+      </div>
+      <div class="field-label">Notes <span style="text-transform:none;letter-spacing:0;color:#C58A88">(optional)</span></div>
+      <input type="text" id="symptomInput" placeholder="e.g. started behind left eye" maxlength="300" aria-label="Notes (optional)">
       <div class="field-label">Severity</div>
       <div class="sev-row" role="group" aria-label="Severity 1 to 5">
         <button class="sev-btn" data-sev="1" type="button">1 &middot; Mild</button>
@@ -350,6 +404,39 @@
       </div>
       <div class="add-row"><button class="add-btn" id="addBathroomBtn" type="button">Add</button></div>
       <div class="status" id="bathroomStatus" role="status" aria-live="polite"></div>
+    </div>
+
+    <!-- Daily check-in -->
+    <div class="writer daily-writer" id="dailyWriter">
+      <div class="writer-label">Daily check-in</div>
+      <p class="daily-note">A quick read on the day. Skip anything you don't want to answer.</p>
+      <div class="field-label">Day</div>
+      <input type="date" id="dailyDate" aria-label="Check-in date">
+
+      <div class="field-label">Sleep</div>
+      <div class="sleep-row">
+        <input type="number" id="sleepHours" min="0" max="24" step="0.5" placeholder="hrs" aria-label="Hours slept">
+        <div class="scale-row" id="sleepQualRow" role="group" aria-label="Sleep quality 1 to 5"></div>
+      </div>
+      <div class="scale-hint">Quality: 1 = poor &middot; 5 = great</div>
+
+      <div class="field-label">Stress</div>
+      <div class="scale-row" id="stressRow" role="group" aria-label="Stress 1 to 5"></div>
+      <div class="scale-hint">1 = calm &middot; 5 = very stressed</div>
+
+      <div class="field-label">Activity / exertion</div>
+      <div class="scale-row" id="exertionRow" role="group" aria-label="Exertion 1 to 5"></div>
+      <div class="scale-hint">1 = restful &middot; 5 = very active</div>
+
+      <div id="dailySymptomsWrap">
+        <div class="field-label">How were these today?</div>
+        <div id="dailySymptoms"></div>
+      </div>
+
+      <div class="field-label">Note <span style="text-transform:none;letter-spacing:0;color:#8FA98C">(optional)</span></div>
+      <input type="text" id="dailyNote" placeholder="anything worth remembering about today" maxlength="300" aria-label="Note">
+      <div class="add-row"><button class="add-btn" id="saveDailyBtn" type="button">Save check-in</button></div>
+      <div class="status" id="dailyStatus" role="status" aria-live="polite"></div>
     </div>
 
     <div class="review-bar">
@@ -496,6 +583,23 @@
   </div>
 </div>
 
+<!-- Symptom list manager -->
+<div class="modal-back" id="symMgrBack">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="symMgrTitle">
+    <h2 id="symMgrTitle">Your symptoms</h2>
+    <p class="note">Add what you want to track. Mark a symptom <b>Daily</b> if it's an ongoing background thing (fatigue, brain fog, anxiety) — those appear on the daily check-in. Removing one keeps your past entries intact.</p>
+    <label for="symNewLabel">Add a symptom</label>
+    <div class="sym-add-row">
+      <input type="text" id="symNewLabel" placeholder="e.g. Neck stiffness" maxlength="60" autocomplete="off">
+      <button class="btn-primary" id="symNewAdd" type="button">Add</button>
+    </div>
+    <label class="sym-daily-check"><input type="checkbox" id="symNewDaily"> Track this daily</label>
+    <div class="lib-list" id="symMgrList"></div>
+    <div class="modal-btns"><button class="btn-ghost" id="symMgrClose" type="button">Close</button></div>
+    <div class="modal-msg" id="symMgrMsg"></div>
+  </div>
+</div>
+
 <!-- Review history -->
 <div class="modal-back" id="histBack">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="histTitle">
@@ -510,7 +614,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v3.6-glance-period';
+  var APP_BUILD = 'fe-v3.7-symptoms-checkin';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var GLANCE_KEY = 'ticketrail.glance';   // remembers the glance period between opens
@@ -524,8 +628,9 @@
   function bristolBand(n) { return n <= 2 ? 'Constipation' : (n >= 6 ? 'Loose' : 'Normal'); }
   function bandClass(n) { return n <= 2 ? 'band-constipation' : (n >= 6 ? 'band-loose' : 'band-normal'); }
 
-  var cfg = null, server = [], outbox = [], products = [], dishes = [];
+  var cfg = null, server = [], outbox = [], products = [], dishes = [], symTypes = [];
   var selectedMeal = 'Breakfast', selectedSev = 3, selectedBristol = 4, syncing = false;
+  var selectedSymType = '';   // label of the chosen symptom type ('' = none picked yet)
   var pendingUpc = null, pendingUpcSave = false, pendingBrand = '', pendingIngredients = '';  // link a scanned product to the next meal add
   var pendingDishName = null, pendingDishIngredients = '';  // link a photographed dish to the next meal add
 
@@ -553,10 +658,10 @@
   // ---- persistence
   function loadLocal() {
     try { cfg = JSON.parse(localStorage.getItem(CFG_KEY)) || null; } catch (e) { cfg = null; }
-    try { var c = JSON.parse(localStorage.getItem(CACHE_KEY)); if (c) { server = c.server || []; outbox = c.outbox || []; products = c.products || []; dishes = c.dishes || []; } }
-    catch (e) { server = []; outbox = []; products = []; dishes = []; }
+    try { var c = JSON.parse(localStorage.getItem(CACHE_KEY)); if (c) { server = c.server || []; outbox = c.outbox || []; products = c.products || []; dishes = c.dishes || []; symTypes = c.symTypes || []; } }
+    catch (e) { server = []; outbox = []; products = []; dishes = []; symTypes = []; }
   }
-  function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ server: server, outbox: outbox, products: products, dishes: dishes })); } catch (e) {} }
+  function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ server: server, outbox: outbox, products: products, dishes: dishes, symTypes: symTypes })); } catch (e) {} }
   function saveCfg() { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {} }
 
   function post(payload) {
@@ -583,18 +688,30 @@
 
   // ---- view model: server + pending ops
   function viewEntries() {
-    var deletes = {}, updates = {};
+    var deletes = {}, updates = {}, pendingCheckins = {};
     outbox.forEach(function (op) {
       if (op.op === 'delete') deletes[op.id] = true;
       if (op.op === 'update') updates[op.id] = Object.assign(updates[op.id] || {}, op.patch);
+      // check-ins upsert by date, so a queued one supersedes the synced row for that day
+      if (op.op === 'checkin_save' && op.payload && op.payload.date) pendingCheckins[op.payload.date] = op.payload;
     });
-    var list = server.filter(function (e) { return !deletes[e.id]; }).map(function (e) {
+    var list = server.filter(function (e) {
+      if (deletes[e.id]) return false;
+      if (e.kind === 'daily' && pendingCheckins[e.date]) return false;
+      return true;
+    }).map(function (e) {
       var m = Object.assign({ pending: false }, e);
       if (updates[e.id]) m = Object.assign(m, updates[e.id]);
       return m;
     });
     outbox.forEach(function (op) {
       if (op.op === 'append') list.push(Object.assign({ id: op.tempId, pending: true, kind: op.kind }, op.entry));
+    });
+    Object.keys(pendingCheckins).forEach(function (d) {
+      var p = pendingCheckins[d];
+      list.push({ kind: 'daily', id: 'tmp-ci-' + d, pending: true, ts: p.ts || Date.now(), date: d,
+        text: p.note || '', sleepHours: p.sleepHours, sleepQuality: p.sleepQuality,
+        stress: p.stress, exertion: p.exertion, ratings: p.ratings });
     });
     return list;
   }
@@ -732,11 +849,12 @@
       var list = document.createElement('ul'); list.className = 'tickets';
       g.items.forEach(function (e) {
         var li = document.createElement('li');
-        li.className = 'ticket' + (e.kind === 'symptom' ? ' symptom' : (e.kind === 'bathroom' ? ' bowel' : '')) + (e.pending ? ' pending' : '');
+        li.className = 'ticket' + (e.kind === 'symptom' ? ' symptom' : (e.kind === 'bathroom' ? ' bowel' : (e.kind === 'daily' ? ' daily' : ''))) + (e.pending ? ' pending' : '');
         var top = document.createElement('div'); top.className = 'ticket-top';
         var stamp = document.createElement('span');
         if (e.kind === 'meal') { stamp.className = 'stamp ' + e.meal; stamp.textContent = e.meal; }
         else if (e.kind === 'bathroom') { stamp.className = 'stamp Bathroom'; stamp.textContent = 'Bathroom'; }
+        else if (e.kind === 'daily') { stamp.className = 'stamp Daily'; stamp.textContent = 'Check-in'; }
         else { stamp.className = 'stamp FeltOff'; stamp.textContent = 'Felt off'; }
         top.appendChild(stamp);
         if (e.pending) { var pt = document.createElement('span'); pt.className = 'pend-tag'; pt.textContent = 'Syncing'; top.appendChild(pt); }
@@ -747,6 +865,33 @@
 
         if (e.kind === 'meal' && e.amount) {
           var amt = document.createElement('div'); amt.className = 'amount-line'; amt.textContent = e.amount; li.appendChild(amt);
+        }
+
+        if (e.kind === 'symptom' && e.type) {
+          var st = document.createElement('div'); st.className = 'bristol-line';
+          var sc = document.createElement('span'); sc.className = 'bristol-chip'; sc.style.borderColor = '#A03332'; sc.style.color = '#A03332';
+          sc.textContent = e.type; st.appendChild(sc); li.insertBefore(st, li.children[1] || null);
+        }
+
+        if (e.kind === 'daily') {
+          var df = document.createElement('div'); df.className = 'daily-facts';
+          function fact(label, val, suffix) {
+            if (val === '' || val == null) return;
+            var f = document.createElement('span'); f.className = 'daily-fact';
+            var b = document.createElement('b'); b.textContent = val + (suffix || '');
+            f.appendChild(document.createTextNode(label + ' ')); f.appendChild(b); df.appendChild(f);
+          }
+          fact('Sleep', e.sleepHours, 'h');
+          fact('Quality', e.sleepQuality, '/5');
+          fact('Stress', e.stress, '/5');
+          fact('Exertion', e.exertion, '/5');
+          var rr = e.ratings;
+          if (typeof rr === 'string' && rr) { try { rr = JSON.parse(rr); } catch (err) { rr = null; } }
+          if (rr && typeof rr === 'object') {
+            var byKey = {}; symTypesView().forEach(function (t) { byKey[t.key] = t.label; });
+            Object.keys(rr).forEach(function (k) { fact(byKey[k] || k, rr[k], '/5'); });
+          }
+          if (df.childNodes.length) li.appendChild(df);
         }
 
         if (e.kind === 'bathroom') {
@@ -814,12 +959,13 @@
   }
   function addSymptom() {
     var text = symptomInput.value.trim();
-    if (!text) { flash(symptomStatus, 'Describe how you feel first.'); symptomInput.focus(); return; }
+    if (!selectedSymType && !text) { flash(symptomStatus, 'Pick a symptom (or type a note).'); return; }
     var ts = tsFromInput(symptomTime.value) || Date.now();
     outbox.push({ op: 'append', kind: 'symptom', tempId: 'tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2,7),
-      entry: { text: text, severity: selectedSev, ts: ts } });
+      entry: { text: text, severity: selectedSev, ts: ts, type: selectedSymType } });
     symptomInput.value = ''; symptomTime.value = toLocalInputValue();
-    saveCache(); render(); refreshSyncPill(); symptomInput.focus(); flush();
+    selectedSymType = ''; renderSymPicker();
+    saveCache(); render(); refreshSyncPill(); flush();
   }
   function addBathroom() {
     var ts = tsFromInput(bathroomTime.value) || Date.now();
@@ -869,6 +1015,12 @@
     });
   }
   function openEdit(e) {
+    if (e.kind === 'daily') {   // check-ins are edited in their own tab, keyed by date
+      dailyDate.value = e.date || toDateInput(new Date(e.ts));
+      showTab('daily');
+      dailyWriter.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
     editTarget = e; editMsg.textContent = ''; editMsg.className = 'modal-msg';
     editText.value = e.text || ''; editTime.value = toLocalInputValue(new Date(e.ts));
     editMealWrap.style.display = 'none'; editSevWrap.style.display = 'none'; editBristolWrap.style.display = 'none';
@@ -928,6 +1080,9 @@
       else if (op.op === 'product_delete') call = post({ action: 'product_delete', upc: op.upc });
       else if (op.op === 'dish_save') call = post({ action: 'dish_save', name: op.name, meal: op.meal, ingredients: op.ingredients });
       else if (op.op === 'dish_delete') call = post({ action: 'dish_delete', name: op.name });
+      else if (op.op === 'symptom_type_save') call = post({ action: 'symptom_type_save', label: op.label, daily: op.daily, active: op.active });
+      else if (op.op === 'symptom_type_delete') call = post({ action: 'symptom_type_delete', key: op.key });
+      else if (op.op === 'checkin_save') call = post(Object.assign({ action: 'checkin_save' }, op.payload));
       else call = Promise.resolve({ ok: true });
       return call.then(function (res) {
         if (res && (res.ok || res.error === 'not found')) {
@@ -950,6 +1105,9 @@
       return post({ action: 'dish_list' });
     }).then(function (dres) {
       if (dres && dres.ok && Array.isArray(dres.dishes)) { dishes = dres.dishes; saveCache(); }
+      return post({ action: 'symptom_types' });
+    }).then(function (tres) {
+      if (tres && tres.ok && Array.isArray(tres.types)) { symTypes = tres.types; saveCache(); renderSymPicker(); }
       syncing = false; render(); refreshSyncPill();
       if (libBack.classList.contains('on')) renderLibrary();
     }).catch(function () { syncing = false; refreshSyncPill(); });
@@ -957,8 +1115,10 @@
   function normalize(res) {
     var out = [];
     (res.meals || []).forEach(function (m) { out.push({ kind: 'meal', id: m.id, ts: Number(m.ts), text: m.text, meal: m.meal, amount: m.amount || '' }); });
-    (res.symptoms || []).forEach(function (s) { out.push({ kind: 'symptom', id: s.id, ts: Number(s.ts), text: s.text, severity: Number(s.severity) }); });
+    (res.symptoms || []).forEach(function (s) { out.push({ kind: 'symptom', id: s.id, ts: Number(s.ts), text: s.text, severity: Number(s.severity), type: s.type || '' }); });
     (res.bathroom || []).forEach(function (b) { out.push({ kind: 'bathroom', id: b.id, ts: Number(b.ts), text: b.text || '', bristol: Number(b.bristol) }); });
+    (res.checkins || []).forEach(function (c) { out.push({ kind: 'daily', id: c.id, ts: Number(c.ts), text: c.note || '', date: c.date,
+      sleepHours: c.sleepHours, sleepQuality: c.sleepQuality, stress: c.stress, exertion: c.exertion, ratings: c.ratings }); });
     return out;
   }
 
@@ -1379,6 +1539,191 @@
   libBack.addEventListener('click', function (ev) { if (ev.target === libBack) closeLibrary(); });
   libSearch.addEventListener('input', renderLibrary);
 
+  // ================= Symptom types =================
+  // Types live in the Sheet; the outbox carries edits so this works offline like everything else.
+  function symTypesView() {
+    var map = {};
+    symTypes.forEach(function (t) { if (t && t.label) map[normName(t.label)] = { label: t.label, daily: isTrue(t.daily), active: isTrue(t.active) }; });
+    outbox.forEach(function (op) {
+      if (op.op === 'symptom_type_save') map[normName(op.label)] = { label: op.label, daily: !!op.daily, active: op.active !== false };
+      if (op.op === 'symptom_type_delete') { var e = map[op.key]; if (e) e.active = false; }
+    });
+    return Object.keys(map).map(function (k) { return Object.assign({ key: k }, map[k]); });
+  }
+  function isTrue(v) { return v === true || v === 'TRUE' || v === 'true' || v === 1 || v === '1'; }
+  function activeSymTypes() { return symTypesView().filter(function (t) { return t.active; }).sort(function (a, b) { return a.label.localeCompare(b.label); }); }
+  function dailySymTypes() { return activeSymTypes().filter(function (t) { return t.daily; }); }
+
+  var symPicker = $('symPicker');
+  function renderSymPicker() {
+    if (!symPicker) return;
+    var list = activeSymTypes();
+    symPicker.textContent = '';
+    if (!list.length) {
+      var e = document.createElement('span'); e.className = 'scale-hint'; e.textContent = 'No symptoms yet — add one below.';
+      symPicker.appendChild(e); return;
+    }
+    if (selectedSymType && !list.some(function (t) { return t.label === selectedSymType; })) selectedSymType = '';
+    list.forEach(function (t) {
+      var b = document.createElement('button'); b.type = 'button';
+      b.className = 'sym-chip' + (selectedSymType === t.label ? ' on' : '');
+      b.textContent = t.label;
+      b.setAttribute('aria-pressed', String(selectedSymType === t.label));
+      b.addEventListener('click', function () {
+        selectedSymType = (selectedSymType === t.label) ? '' : t.label;
+        renderSymPicker();
+      });
+      symPicker.appendChild(b);
+    });
+  }
+
+  function saveSymType(label, daily, active) {
+    outbox.push({ op: 'symptom_type_save', label: label, daily: !!daily, active: active !== false });
+    saveCache(); refreshSyncPill(); renderSymPicker(); renderSymMgr(); renderDailySymptoms(); flush();
+  }
+
+  // ---- symptom list manager
+  var symMgrBack = $('symMgrBack'), symMgrList = $('symMgrList'), symMgrMsg = $('symMgrMsg');
+  var symNewLabel = $('symNewLabel'), symNewDaily = $('symNewDaily');
+  function openSymMgr() { symMgrMsg.textContent = ''; symMgrMsg.className = 'modal-msg'; symNewLabel.value = ''; symNewDaily.checked = false; renderSymMgr(); symMgrBack.classList.add('on'); }
+  function closeSymMgr() { symMgrBack.classList.remove('on'); }
+  function renderSymMgr() {
+    if (!symMgrList) return;
+    var list = activeSymTypes();
+    symMgrList.textContent = '';
+    if (!list.length) {
+      var e = document.createElement('div'); e.className = 'empty'; e.style.margin = '18px 0'; e.textContent = 'No symptoms yet.';
+      symMgrList.appendChild(e); return;
+    }
+    list.forEach(function (t) {
+      var row = document.createElement('div'); row.className = 'sym-mgr-row';
+      var nm = document.createElement('span'); nm.className = 'sym-mgr-name'; nm.textContent = t.label;
+      var dailyBtn = document.createElement('button'); dailyBtn.type = 'button';
+      dailyBtn.className = 'sym-mgr-daily' + (t.daily ? ' on' : ''); dailyBtn.textContent = 'Daily';
+      dailyBtn.setAttribute('aria-pressed', String(t.daily));
+      dailyBtn.addEventListener('click', function () { saveSymType(t.label, !t.daily, true); });
+      var del = document.createElement('button'); del.type = 'button'; del.className = 'lib-op del'; del.textContent = 'Remove';
+      del.addEventListener('click', function () {
+        if (!window.confirm('Remove "' + t.label + '" from your list? Past entries that used it stay intact.')) return;
+        outbox.push({ op: 'symptom_type_delete', key: t.key });
+        saveCache(); refreshSyncPill(); renderSymMgr(); renderSymPicker(); renderDailySymptoms(); flush();
+      });
+      row.appendChild(nm); row.appendChild(dailyBtn); row.appendChild(del);
+      symMgrList.appendChild(row);
+    });
+  }
+  function addTypeFromInput() {
+    var label = symNewLabel.value.trim();
+    if (!label) { symNewLabel.focus(); return; }
+    if (activeSymTypes().some(function (t) { return normName(t.label) === normName(label); })) {
+      symMgrMsg.className = 'modal-msg err'; symMgrMsg.textContent = 'You already track that one.'; return;
+    }
+    saveSymType(label, symNewDaily.checked, true);
+    symMgrMsg.className = 'modal-msg ok'; symMgrMsg.textContent = 'Added "' + label + '".';
+    symNewLabel.value = ''; symNewDaily.checked = false; symNewLabel.focus();
+  }
+  $('symNewAdd').addEventListener('click', addTypeFromInput);
+  symNewLabel.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') addTypeFromInput(); });
+  $('symMgrClose').addEventListener('click', closeSymMgr);
+  symMgrBack.addEventListener('click', function (ev) { if (ev.target === symMgrBack) closeSymMgr(); });
+  $('symManageBtn').addEventListener('click', openSymMgr);
+  $('symAddTypeBtn').addEventListener('click', function () { openSymMgr(); symNewLabel.focus(); });
+
+  // ================= Daily check-in =================
+  var dailyDate = $('dailyDate'), dailyNote = $('dailyNote'), dailyStatus = $('dailyStatus'), sleepHours = $('sleepHours');
+  var dailyVals = { sleepQuality: null, stress: null, exertion: null };
+  var dailyRatings = {};
+
+  function buildScale(hostId, field) {
+    var host = $(hostId); if (!host) return;
+    host.textContent = '';
+    [1, 2, 3, 4, 5].forEach(function (n) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'scale-btn'; b.textContent = String(n);
+      b.setAttribute('data-n', n);
+      b.addEventListener('click', function () {
+        dailyVals[field] = (dailyVals[field] === n) ? null : n;   // tap again to clear
+        paintScale(hostId, dailyVals[field]);
+      });
+      host.appendChild(b);
+    });
+  }
+  function paintScale(hostId, val) {
+    var host = $(hostId); if (!host) return;
+    [].slice.call(host.children).forEach(function (b) { b.classList.toggle('on', Number(b.getAttribute('data-n')) === val); });
+  }
+
+  function renderDailySymptoms() {
+    var host = $('dailySymptoms'), wrap = $('dailySymptomsWrap');
+    if (!host) return;
+    var list = dailySymTypes();
+    wrap.style.display = list.length ? 'block' : 'none';
+    host.textContent = '';
+    list.forEach(function (t) {
+      var box = document.createElement('div'); box.className = 'daily-sym';
+      var nm = document.createElement('div'); nm.className = 'daily-sym-name'; nm.textContent = t.label;
+      var row = document.createElement('div'); row.className = 'scale-row';
+      var none = document.createElement('button'); none.type = 'button'; none.className = 'scale-btn none' + (dailyRatings[t.key] == null ? ' on' : '');
+      none.textContent = 'None';
+      none.addEventListener('click', function () { delete dailyRatings[t.key]; renderDailySymptoms(); });
+      row.appendChild(none);
+      [1, 2, 3, 4, 5].forEach(function (n) {
+        var b = document.createElement('button'); b.type = 'button';
+        b.className = 'scale-btn' + (dailyRatings[t.key] === n ? ' on' : ''); b.textContent = String(n);
+        b.addEventListener('click', function () { dailyRatings[t.key] = n; renderDailySymptoms(); });
+        row.appendChild(b);
+      });
+      box.appendChild(nm); box.appendChild(row); host.appendChild(box);
+    });
+  }
+
+  // Load any existing check-in for the chosen date so editing is natural (one per day).
+  function loadDailyForDate() {
+    if (!dailyDate.value) dailyDate.value = toDateInput(new Date());
+    var d = dailyDate.value;
+    var existing = null;
+    viewEntries().forEach(function (e) { if (e.kind === 'daily' && e.date === d) existing = e; });
+    outbox.forEach(function (op) { if (op.op === 'checkin_save' && op.payload && op.payload.date === d) existing = Object.assign({}, existing || {}, op.payload, { text: op.payload.note || '' }); });
+
+    dailyVals = { sleepQuality: null, stress: null, exertion: null };
+    dailyRatings = {};
+    sleepHours.value = ''; dailyNote.value = '';
+    if (existing) {
+      if (existing.sleepHours !== '' && existing.sleepHours != null) sleepHours.value = existing.sleepHours;
+      dailyVals.sleepQuality = existing.sleepQuality || null;
+      dailyVals.stress = existing.stress || null;
+      dailyVals.exertion = existing.exertion || null;
+      dailyNote.value = existing.note || existing.text || '';
+      var r = existing.ratings;
+      if (typeof r === 'string' && r) { try { r = JSON.parse(r); } catch (e) { r = null; } }
+      if (r && typeof r === 'object') dailyRatings = r;
+      flash(dailyStatus, 'Editing your check-in for this day.', 3000, true);
+    }
+    paintScale('sleepQualRow', dailyVals.sleepQuality);
+    paintScale('stressRow', dailyVals.stress);
+    paintScale('exertionRow', dailyVals.exertion);
+    renderDailySymptoms();
+  }
+
+  function saveDaily() {
+    if (!cfg) { flash(dailyStatus, 'Connect your rail first (gear icon).'); return; }
+    var d = dailyDate.value || toDateInput(new Date());
+    var hrs = sleepHours.value === '' ? '' : Number(sleepHours.value);
+    if (hrs !== '' && (isNaN(hrs) || hrs < 0 || hrs > 24)) { flash(dailyStatus, 'Sleep hours should be 0\u201324.'); return; }
+    var payload = {
+      date: d, ts: Date.now(), sleepHours: hrs,
+      sleepQuality: dailyVals.sleepQuality || '', stress: dailyVals.stress || '', exertion: dailyVals.exertion || '',
+      note: dailyNote.value.trim(), ratings: dailyRatings
+    };
+    // one queued op per date — replace any pending one so we don't stack duplicates
+    for (var i = outbox.length - 1; i >= 0; i--) {
+      if (outbox[i].op === 'checkin_save' && outbox[i].payload && outbox[i].payload.date === d) outbox.splice(i, 1);
+    }
+    outbox.push({ op: 'checkin_save', payload: payload });
+    saveCache(); render(); refreshSyncPill(); flash(dailyStatus, 'Check-in saved.', 2500, true); flush();
+  }
+  $('saveDailyBtn').addEventListener('click', saveDaily);
+  dailyDate.addEventListener('change', loadDailyForDate);
+
   // ================= Duplicate catcher =================
   // As you type a meal, surface "did you mean [existing item]?" so the same food isn't
   // logged under slightly different names (which would fragment it in the review + library).
@@ -1577,25 +1922,25 @@
   histBack.addEventListener('click', function (ev) { if (ev.target === histBack) closeHistory(); });
 
   // ================= tabs / inputs =================
-  var tabMeal = $('tabMeal'), tabSymptom = $('tabSymptom'), tabBathroom = $('tabBathroom');
-  var mealWriter = $('mealWriter'), symptomWriter = $('symptomWriter'), bathroomWriter = $('bathroomWriter');
+  var tabMeal = $('tabMeal'), tabSymptom = $('tabSymptom'), tabBathroom = $('tabBathroom'), tabDaily = $('tabDaily');
+  var mealWriter = $('mealWriter'), symptomWriter = $('symptomWriter'), bathroomWriter = $('bathroomWriter'), dailyWriter = $('dailyWriter');
   function showTab(which) {
-    tabMeal.classList.toggle('on', which === 'meal');
-    tabSymptom.classList.toggle('on', which === 'symptom');
-    tabBathroom.classList.toggle('on', which === 'bathroom');
-    tabMeal.setAttribute('aria-selected', String(which === 'meal'));
-    tabSymptom.setAttribute('aria-selected', String(which === 'symptom'));
-    tabBathroom.setAttribute('aria-selected', String(which === 'bathroom'));
-    mealWriter.style.display = which === 'meal' ? 'block' : 'none';
-    symptomWriter.style.display = which === 'symptom' ? 'block' : 'none';
-    bathroomWriter.style.display = which === 'bathroom' ? 'block' : 'none';
+    var tabs = { meal: tabMeal, symptom: tabSymptom, bathroom: tabBathroom, daily: tabDaily };
+    var writers = { meal: mealWriter, symptom: symptomWriter, bathroom: bathroomWriter, daily: dailyWriter };
+    Object.keys(tabs).forEach(function (k) {
+      tabs[k].classList.toggle('on', which === k);
+      tabs[k].setAttribute('aria-selected', String(which === k));
+      writers[k].style.display = (which === k) ? 'block' : 'none';
+    });
     if (which === 'meal' && !mealTime.value) mealTime.value = toLocalInputValue();
     if (which === 'symptom' && !symptomTime.value) symptomTime.value = toLocalInputValue();
     if (which === 'bathroom' && !bathroomTime.value) bathroomTime.value = toLocalInputValue();
+    if (which === 'daily') loadDailyForDate();
   }
   tabMeal.addEventListener('click', function () { showTab('meal'); });
   tabSymptom.addEventListener('click', function () { showTab('symptom'); });
   tabBathroom.addEventListener('click', function () { showTab('bathroom'); });
+  tabDaily.addEventListener('click', function () { showTab('daily'); });
   mealBtns.forEach(function (b) { b.addEventListener('click', function () { selectedMeal = b.getAttribute('data-meal'); mealBtns.forEach(function (x) { x.classList.toggle('on', x === b); }); }); });
   sevBtns.forEach(function (b) { b.addEventListener('click', function () { selectedSev = parseInt(b.getAttribute('data-sev'), 10); sevBtns.forEach(function (x) { x.classList.toggle('on', x === b); }); }); });
   bristolBtns.forEach(function (b) { b.addEventListener('click', function () { selectedBristol = parseInt(b.getAttribute('data-b'), 10); bristolBtns.forEach(function (x) { x.classList.toggle('on', x === b); }); updateBristolDesc(); }); });
@@ -1761,6 +2106,11 @@
   symptomTime.value = toLocalInputValue();
   bathroomTime.value = toLocalInputValue();
   updateBristolDesc();
+  dailyDate.value = toDateInput(new Date());
+  buildScale('sleepQualRow', 'sleepQuality');
+  buildScale('stressRow', 'stress');
+  buildScale('exertionRow', 'exertion');
+  renderSymPicker(); renderDailySymptoms();
   loadLocal(); render(); refreshSyncPill();
   if (!cfg) openModal(); else flush();
 

@@ -260,9 +260,9 @@
   .sym-mgr-name { flex: 1; font-family: 'IBM Plex Mono', monospace; font-size: 13px; overflow-wrap: anywhere; }
 
   /* Sleep ticket (from the watch) */
-  .ticket.sleep { background: linear-gradient(180deg, #FDFDFE 0%, #EDEFF3 100%); color: #3A4048; border-radius: 18px; box-shadow: 0 3px 0 #C7CDD6; }
-  /* soft cloud-puff top edge instead of the ticket perforation */
-  .ticket.sleep::before { top: -8px; height: 11px; background-image: radial-gradient(circle at 10px 11px, #FDFDFE 10px, transparent 10.5px); background-size: 20px 11px; background-repeat: repeat-x; }
+  .ticket.sleep { background: linear-gradient(180deg, #FDFDFE 0%, #EDEFF3 100%); color: #3A4048; border-radius: 14px; box-shadow: 0 3px 0 #C7CDD6; }
+  /* soft cloud-puff top edge — inset past the rounded corners so it can't overhang the ticket */
+  .ticket.sleep::before { left: 18px; right: 18px; top: -11px; height: 13px; background-image: radial-gradient(circle at 26px 13px, #FDFDFE 26px, transparent 26.5px); background-size: 52px 13px; background-repeat: repeat-x; background-position: center bottom; }
   .ticket.sleep .time { color: #8A94A3; }
   .stamp.Sleep { color: #5A6472; background: transparent; border-color: #C3CAD4; display: inline-flex; align-items: center; gap: 5px; }
   .stamp.Sleep svg { width: 13px; height: 13px; fill: #8A94A3; }
@@ -560,7 +560,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v4.0-sleep-dates';
+  var APP_BUILD = 'fe-v4.1-cloud';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var GLANCE_KEY = 'ticketrail.glance';   // remembers the glance period between opens

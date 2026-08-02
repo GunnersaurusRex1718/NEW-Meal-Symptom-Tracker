@@ -260,13 +260,16 @@
   .sym-mgr-name { flex: 1; font-family: 'IBM Plex Mono', monospace; font-size: 13px; overflow-wrap: anywhere; }
 
   /* Sleep ticket (from the watch) */
-  .ticket.sleep { background: #E7ECF3; }
-  .ticket.sleep::before { background-image: radial-gradient(circle at 6px 0px, transparent 5px, #E7ECF3 5px); }
-  .stamp.Sleep { color: #EEF2F8; background: #3B4E6B; border-color: #3B4E6B; }
+  .ticket.sleep { background: linear-gradient(180deg, #FDFDFE 0%, #EDEFF3 100%); color: #3A4048; border-radius: 18px; box-shadow: 0 3px 0 #C7CDD6; }
+  /* soft cloud-puff top edge instead of the ticket perforation */
+  .ticket.sleep::before { top: -8px; height: 11px; background-image: radial-gradient(circle at 10px 11px, #FDFDFE 10px, transparent 10.5px); background-size: 20px 11px; background-repeat: repeat-x; }
+  .ticket.sleep .time { color: #8A94A3; }
+  .stamp.Sleep { color: #5A6472; background: transparent; border-color: #C3CAD4; display: inline-flex; align-items: center; gap: 5px; }
+  .stamp.Sleep svg { width: 13px; height: 13px; fill: #8A94A3; }
   .daily-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .daily-fact { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #33415C; border: 1px solid #B9C4D6; border-radius: 20px; padding: 2px 9px; }
+  .daily-fact { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #4A515B; background: #FFFFFF; border: 1px solid #D5DAE2; border-radius: 20px; padding: 2px 9px; }
   .daily-fact b { font-family: 'Saira Condensed', sans-serif; font-size: 13px; }
-  .week-chip.c-sleep b { color: #7C93BD; }
+  .week-chip.c-sleep b { color: #AEB6C2; }
 </style>
 </head>
 <body>
@@ -557,7 +560,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v3.8-garmin-sleep';
+  var APP_BUILD = 'fe-v4.0-sleep-dates';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var GLANCE_KEY = 'ticketrail.glance';   // remembers the glance period between opens
@@ -627,6 +630,14 @@
     var d = dt || new Date(), p = function (n) { return String(n).padStart(2, '0'); };
     return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
+  // Anchor a night's sleep at 9am on its date. Built from parts (not string parsing) so an
+  // odd date format can never silently collapse every night onto today.
+  function sleepTs(dateStr, fallbackTs) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateStr || ''));
+    if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 9, 0, 0).getTime();
+    return Number(fallbackTs) || Date.now();
+  }
+
   function tsFromInput(val) { if (!val) return null; var t = new Date(val).getTime(); return isNaN(t) ? null : t; }
 
   // ---- view model: server + pending ops
@@ -795,7 +806,11 @@
         var stamp = document.createElement('span');
         if (e.kind === 'meal') { stamp.className = 'stamp ' + e.meal; stamp.textContent = e.meal; }
         else if (e.kind === 'bathroom') { stamp.className = 'stamp Bathroom'; stamp.textContent = 'Bathroom'; }
-        else if (e.kind === 'sleep') { stamp.className = 'stamp Sleep'; stamp.textContent = 'Sleep'; }
+        else if (e.kind === 'sleep') {
+          stamp.className = 'stamp Sleep';
+          stamp.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.5 19H7A5 5 0 017 9h.3A6.5 6.5 0 0119.8 11.2 4 4 0 0118.5 19z"/></svg>';
+          stamp.appendChild(document.createTextNode('Sleep'));
+        }
         else { stamp.className = 'stamp FeltOff'; stamp.textContent = 'Felt off'; }
         top.appendChild(stamp);
         if (e.pending) { var pt = document.createElement('span'); pt.className = 'pend-tag'; pt.textContent = 'Syncing'; top.appendChild(pt); }
@@ -1055,8 +1070,8 @@
     (res.symptoms || []).forEach(function (s) { out.push({ kind: 'symptom', id: s.id, ts: Number(s.ts), text: s.text, severity: Number(s.severity), type: s.type || '' }); });
     (res.bathroom || []).forEach(function (b) { out.push({ kind: 'bathroom', id: b.id, ts: Number(b.ts), text: b.text || '', bristol: Number(b.bristol) }); });
     (res.wearable || []).forEach(function (w) {
-      var mid = new Date(w.date + 'T09:00').getTime();   // anchor the night's sleep at ~9am on that date
-      out.push({ kind: 'sleep', id: 'slp-' + w.date, ts: isNaN(mid) ? Number(w.ts) : mid, text: '', date: w.date,
+      var d = String(w.date || '').slice(0, 10);
+      out.push({ kind: 'sleep', id: 'slp-' + d, ts: sleepTs(d, w.ts), text: '', date: d,
         sleepHours: w.sleepHours, deepMin: w.deepMin, remMin: w.remMin, lightMin: w.lightMin, awakeMin: w.awakeMin,
         restingHR: w.restingHR, hrv: w.hrv, metrics: w.metrics }); });
     return out;

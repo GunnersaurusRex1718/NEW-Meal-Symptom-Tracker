@@ -271,6 +271,13 @@
   }
   .ticket.sleep::before { content: none; }   /* no perforation, no scallop */
   .ticket.sleep .time { color: #8A94A3; }
+  /* Activity card: crisp watch-data panel, distinct from paper tickets and the pillow */
+  .ticket.activity { background: #F2F4F1; color: #35403A; border: 1px solid #D9DFD8; border-left: 4px solid #6F8F6B; border-radius: 6px; box-shadow: 0 2px 6px rgba(53, 64, 58, 0.08); }
+  .ticket.activity::before { content: none; }
+  .ticket.activity .time { color: #8A968E; }
+  .stamp.Activity { color: #4C6849; background: transparent; border-color: #A9BFA6; display: inline-flex; align-items: center; gap: 5px; }
+  .stamp.Activity svg { width: 12px; height: 12px; fill: #6F8F6B; }
+  .daily-fact.act-fact { color: #44523F; background: #FFFFFF; border-color: #C9D5C7; }
   .stamp.Sleep { color: #5A6472; background: transparent; border-color: #C3CAD4; display: inline-flex; align-items: center; gap: 5px; }
   .stamp.Sleep svg { width: 13px; height: 13px; fill: #8A94A3; }
   .daily-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
@@ -567,7 +574,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v4.3-activity';
+  var APP_BUILD = 'fe-v4.4-activity-card';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var GLANCE_KEY = 'ticketrail.glance';   // remembers the glance period between opens
@@ -808,11 +815,16 @@
       var list = document.createElement('ul'); list.className = 'tickets';
       g.items.forEach(function (e) {
         var li = document.createElement('li');
-        li.className = 'ticket' + (e.kind === 'symptom' ? ' symptom' : (e.kind === 'bathroom' ? ' bowel' : (e.kind === 'sleep' ? ' sleep' : ''))) + (e.pending ? ' pending' : '');
+        li.className = 'ticket' + (e.kind === 'symptom' ? ' symptom' : (e.kind === 'bathroom' ? ' bowel' : (e.kind === 'sleep' ? ' sleep' : (e.kind === 'activity' ? ' activity' : '')))) + (e.pending ? ' pending' : '');
         var top = document.createElement('div'); top.className = 'ticket-top';
         var stamp = document.createElement('span');
         if (e.kind === 'meal') { stamp.className = 'stamp ' + e.meal; stamp.textContent = e.meal; }
         else if (e.kind === 'bathroom') { stamp.className = 'stamp Bathroom'; stamp.textContent = 'Bathroom'; }
+        else if (e.kind === 'activity') {
+          stamp.className = 'stamp Activity';
+          stamp.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 3l-6 9h4l-1.5 9 6.5-10h-4.2L13.5 3z"/></svg>';
+          stamp.appendChild(document.createTextNode('Activity'));
+        }
         else if (e.kind === 'sleep') {
           stamp.className = 'stamp Sleep';
           stamp.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.5 19H7A5 5 0 017 9h.3A6.5 6.5 0 0119.8 11.2 4 4 0 0118.5 19z"/></svg>';
@@ -853,16 +865,27 @@
           fact('Awake', e.awakeMin, 'm');
           fact('Resting HR', e.restingHR, '');
           fact('HRV', e.hrv, '');
-          if (e.steps) fact('Steps', Number(e.steps).toLocaleString(), '');
-          fact('Active', e.activeKcal, ' kcal');
-          if (e.hrAvg || e.hrMax) {
-            var hrTxt = (e.hrAvg ? ('avg ' + e.hrAvg) : '') + (e.hrAvg && e.hrMax ? ' / ' : '') + (e.hrMax ? ('max ' + e.hrMax) : '');
-            fact('HR', hrTxt, '');
-          }
           var mm = e.metrics;
           if (typeof mm === 'string' && mm) { try { mm = JSON.parse(mm); } catch (err) { mm = null; } }
           if (mm && typeof mm === 'object') Object.keys(mm).forEach(function (k) { fact(k, mm[k], ''); });
           if (df.childNodes.length) li.appendChild(df);
+        }
+
+        if (e.kind === 'activity') {
+          var af = document.createElement('div'); af.className = 'daily-facts';
+          function afact(label, val, suffix) {
+            if (val === '' || val == null || val === 0) return;
+            var f = document.createElement('span'); f.className = 'daily-fact act-fact';
+            var b = document.createElement('b'); b.textContent = val + (suffix || '');
+            f.appendChild(document.createTextNode(label + ' ')); f.appendChild(b); af.appendChild(f);
+          }
+          if (e.steps) afact('Steps', Number(e.steps).toLocaleString(), '');
+          afact('Active', e.activeKcal, ' kcal');
+          if (e.hrAvg || e.hrMax) {
+            var hrTxt = (e.hrAvg ? ('avg ' + e.hrAvg) : '') + (e.hrAvg && e.hrMax ? ' / ' : '') + (e.hrMax ? ('max ' + e.hrMax) : '');
+            afact('HR', hrTxt, '');
+          }
+          if (af.childNodes.length) li.appendChild(af);
         }
 
         if (e.kind === 'bathroom') {
@@ -986,7 +1009,7 @@
     });
   }
   function openEdit(e) {
-    if (e.kind === 'sleep') return;   // sleep tickets come from the watch; not editable here
+    if (e.kind === 'sleep' || e.kind === 'activity') return;   // watch-sourced; not editable here
     editTarget = e; editMsg.textContent = ''; editMsg.className = 'modal-msg';
     editText.value = e.text || ''; editTime.value = toLocalInputValue(new Date(e.ts));
     editMealWrap.style.display = 'none'; editSevWrap.style.display = 'none'; editBristolWrap.style.display = 'none';
@@ -1084,10 +1107,18 @@
     (res.bathroom || []).forEach(function (b) { out.push({ kind: 'bathroom', id: b.id, ts: Number(b.ts), text: b.text || '', bristol: Number(b.bristol) }); });
     (res.wearable || []).forEach(function (w) {
       var d = String(w.date || '').slice(0, 10);
-      out.push({ kind: 'sleep', id: 'slp-' + d, ts: sleepTs(d, w.ts), text: '', date: d,
-        sleepHours: w.sleepHours, deepMin: w.deepMin, remMin: w.remMin, lightMin: w.lightMin, awakeMin: w.awakeMin,
-        restingHR: w.restingHR, hrv: w.hrv, steps: w.steps, activeKcal: w.activeKcal,
-        hrAvg: w.hrAvg, hrMin: w.hrMin, hrMax: w.hrMax, metrics: w.metrics }); });
+      function has(v) { return v !== '' && v != null && !(typeof v === 'number' && isNaN(v)); }
+      // night: the pillow
+      if (has(w.sleepHours) || has(w.deepMin) || has(w.remMin) || has(w.awakeMin) || has(w.inBedHours)) {
+        out.push({ kind: 'sleep', id: 'slp-' + d, ts: sleepTs(d, w.ts), text: '', date: d,
+          sleepHours: w.sleepHours, deepMin: w.deepMin, remMin: w.remMin, lightMin: w.lightMin, awakeMin: w.awakeMin,
+          restingHR: w.restingHR, hrv: w.hrv, metrics: w.metrics });
+      }
+      // day: the activity card (anchored evening so it reads as the day's summary)
+      if (has(w.steps) || has(w.activeKcal) || has(w.hrAvg) || has(w.hrMax)) {
+        out.push({ kind: 'activity', id: 'act-' + d, ts: sleepTs(d, w.ts) + 9 * 60 * 60 * 1000, text: '', date: d,
+          steps: w.steps, activeKcal: w.activeKcal, hrAvg: w.hrAvg, hrMin: w.hrMin, hrMax: w.hrMax });
+      } });
     return out;
   }
 

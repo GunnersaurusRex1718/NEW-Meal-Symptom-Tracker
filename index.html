@@ -567,7 +567,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v4.2-pillow';
+  var APP_BUILD = 'fe-v4.3-activity';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var GLANCE_KEY = 'ticketrail.glance';   // remembers the glance period between opens
@@ -853,6 +853,12 @@
           fact('Awake', e.awakeMin, 'm');
           fact('Resting HR', e.restingHR, '');
           fact('HRV', e.hrv, '');
+          if (e.steps) fact('Steps', Number(e.steps).toLocaleString(), '');
+          fact('Active', e.activeKcal, ' kcal');
+          if (e.hrAvg || e.hrMax) {
+            var hrTxt = (e.hrAvg ? ('avg ' + e.hrAvg) : '') + (e.hrAvg && e.hrMax ? ' / ' : '') + (e.hrMax ? ('max ' + e.hrMax) : '');
+            fact('HR', hrTxt, '');
+          }
           var mm = e.metrics;
           if (typeof mm === 'string' && mm) { try { mm = JSON.parse(mm); } catch (err) { mm = null; } }
           if (mm && typeof mm === 'object') Object.keys(mm).forEach(function (k) { fact(k, mm[k], ''); });
@@ -1080,7 +1086,8 @@
       var d = String(w.date || '').slice(0, 10);
       out.push({ kind: 'sleep', id: 'slp-' + d, ts: sleepTs(d, w.ts), text: '', date: d,
         sleepHours: w.sleepHours, deepMin: w.deepMin, remMin: w.remMin, lightMin: w.lightMin, awakeMin: w.awakeMin,
-        restingHR: w.restingHR, hrv: w.hrv, metrics: w.metrics }); });
+        restingHR: w.restingHR, hrv: w.hrv, steps: w.steps, activeKcal: w.activeKcal,
+        hrAvg: w.hrAvg, hrMin: w.hrMin, hrMax: w.hrMax, metrics: w.metrics }); });
     return out;
   }
 

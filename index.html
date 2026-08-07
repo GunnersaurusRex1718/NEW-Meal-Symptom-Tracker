@@ -278,6 +278,8 @@
   .stamp.Activity { color: #4C6849; background: transparent; border-color: #A9BFA6; display: inline-flex; align-items: center; gap: 5px; }
   .stamp.Activity svg { width: 12px; height: 12px; fill: #6F8F6B; }
   .daily-fact.act-fact { color: #44523F; background: #FFFFFF; border-color: #C9D5C7; }
+  .daily-fact.sleep-total { background: #4A5568; border-color: #4A5568; color: #F4F6F9; }
+  .daily-fact.sleep-total b { color: #FFFFFF; }
   .stamp.Sleep { color: #5A6472; background: transparent; border-color: #C3CAD4; display: inline-flex; align-items: center; gap: 5px; }
   .stamp.Sleep svg { width: 13px; height: 13px; fill: #8A94A3; }
   .daily-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
@@ -574,7 +576,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v4.4-activity-card';
+  var APP_BUILD = 'fe-v4.5-aggregate';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var GLANCE_KEY = 'ticketrail.glance';   // remembers the glance period between opens
@@ -858,10 +860,13 @@
           }
           if (e.sleepHours !== '' && e.sleepHours != null) {
             var h = Math.floor(e.sleepHours), mn = Math.round((e.sleepHours - h) * 60);
-            fact('Slept', h + 'h' + (mn ? (' ' + mn + 'm') : ''), '');
+            var tf = document.createElement('span'); tf.className = 'daily-fact sleep-total';
+            var tb = document.createElement('b'); tb.textContent = h + 'h' + (mn ? (' ' + mn + 'm') : '');
+            tf.appendChild(document.createTextNode('Slept ')); tf.appendChild(tb); df.appendChild(tf);
           }
           fact('Deep', e.deepMin, 'm');
           fact('REM', e.remMin, 'm');
+          fact('Light', e.lightMin, 'm');
           fact('Awake', e.awakeMin, 'm');
           fact('Resting HR', e.restingHR, '');
           fact('HRV', e.hrv, '');
@@ -905,12 +910,16 @@
         }
 
         var actions = document.createElement('div'); actions.className = 'ticket-actions';
-        var editBtn = document.createElement('button'); editBtn.type = 'button'; editBtn.className = 'mini-btn'; editBtn.textContent = 'Edit';
-        editBtn.addEventListener('click', function () { openEdit(e); });
+        var fromWatch = (e.kind === 'sleep' || e.kind === 'activity');
+        if (!fromWatch) {   // watch data isn't editable — a re-import would overwrite any change
+          var editBtn = document.createElement('button'); editBtn.type = 'button'; editBtn.className = 'mini-btn'; editBtn.textContent = 'Edit';
+          editBtn.addEventListener('click', function () { openEdit(e); });
+          actions.appendChild(editBtn);
+        }
         var voidBtn = document.createElement('button'); voidBtn.type = 'button'; voidBtn.className = 'mini-btn void'; voidBtn.textContent = 'Void';
-        voidBtn.setAttribute('aria-label', 'Delete entry: ' + e.text);
+        voidBtn.setAttribute('aria-label', 'Delete entry: ' + (e.text || e.kind));
         voidBtn.addEventListener('click', function () { deleteEntry(e); });
-        actions.appendChild(editBtn); actions.appendChild(voidBtn); li.appendChild(actions);
+        actions.appendChild(voidBtn); li.appendChild(actions);
         list.appendChild(li);
       });
       day.appendChild(list); logEl.appendChild(day);

@@ -259,6 +259,23 @@
   .med-main { flex: 1; min-width: 0; }
   .med-name { font-family: 'IBM Plex Mono', monospace; font-size: 13px; overflow-wrap: anywhere; }
   .med-meta { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #A8A395; margin-top: 3px; }
+  .tab.on.tab-bp { background: #E9EDF4; color: #3D5473; }
+  .writer.bp-writer { background: #E9EDF4; display: none; }
+  .bp-writer .writer-label, .bp-writer .field-label { color: #5B7192; }
+  .bp-writer input[type="text"] { border-bottom-color: #B5C2D6; }
+  .bp-writer .time-row input[type="datetime-local"] { background: #F4F7FA; border-color: #B5C2D6; }
+  .bp-writer .now-btn { border-color: #B5C2D6; color: #5B7192; }
+  .bp-writer .add-btn { background: #3D5473; box-shadow: 2px 2px 0 #B5C2D6; }
+  .bp-note { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B7192; margin: 4px 0 0; line-height: 1.5; }
+  .bp-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .bp-row input { width: 76px; font-family: 'IBM Plex Mono', monospace; font-size: 18px; text-align: center; color: #23211C; background: #F4F7FA; border: 2px solid #B5C2D6; border-radius: 2px; padding: 8px 4px; }
+  .bp-row #bpPulse { width: 84px; font-size: 14px; margin-left: 6px; }
+  .bp-slash { font-family: 'Saira Condensed', sans-serif; font-size: 22px; color: #8FA0B8; }
+  .ticket.bp { background: #E9EDF4; }
+  .ticket.bp::before { background-image: radial-gradient(circle at 6px 0px, transparent 5px, #E9EDF4 5px); }
+  .stamp.BP { color: #F4F7FA; background: #3D5473; border-color: #3D5473; }
+  .bp-reading { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 26px; letter-spacing: 1px; color: #2C3E56; margin-top: 8px; }
+  .bp-reading small { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 400; letter-spacing: 1px; color: #7C8CA5; margin-left: 8px; }
   .ticket.dose { background: #EFE9F3; }
   .ticket.dose::before { background-image: radial-gradient(circle at 6px 0px, transparent 5px, #EFE9F3 5px); }
   .stamp.Dose { color: #F6F2F8; background: #6B4E86; border-color: #6B4E86; }
@@ -327,6 +344,7 @@
       <button class="tab on" id="tabMeal" type="button" role="tab" aria-selected="true">Meal</button>
       <button class="tab tab-symptom" id="tabSymptom" type="button" role="tab" aria-selected="false">Symptom</button>
       <button class="tab tab-bowel" id="tabBathroom" type="button" role="tab" aria-selected="false">Bathroom</button>
+      <button class="tab tab-bp" id="tabBp" type="button" role="tab" aria-selected="false">BP</button>
     </div>
 
     <!-- Meal writer -->
@@ -419,6 +437,28 @@
       </div>
       <div class="add-row"><button class="add-btn" id="addBathroomBtn" type="button">Add</button></div>
       <div class="status" id="bathroomStatus" role="status" aria-live="polite"></div>
+    </div>
+
+    <!-- Blood pressure writer -->
+    <div class="writer bp-writer" id="bpWriter">
+      <div class="writer-label">Blood pressure</div>
+      <p class="bp-note">Readings synced from Garmin appear automatically. Use this to log one by hand.</p>
+      <div class="field-label">Reading</div>
+      <div class="bp-row">
+        <input type="number" id="bpSys" min="40" max="300" inputmode="numeric" placeholder="120" aria-label="Systolic">
+        <span class="bp-slash">/</span>
+        <input type="number" id="bpDia" min="20" max="200" inputmode="numeric" placeholder="80" aria-label="Diastolic">
+        <input type="number" id="bpPulse" min="20" max="300" inputmode="numeric" placeholder="pulse" aria-label="Pulse (optional)">
+      </div>
+      <div class="field-label">Notes <span style="text-transform:none;letter-spacing:0;color:#9FA8B5">(optional)</span></div>
+      <input type="text" id="bpNote" placeholder="e.g. sitting, morning, after coffee" maxlength="300" aria-label="Notes">
+      <div class="field-label">When</div>
+      <div class="time-row">
+        <input type="datetime-local" id="bpTime" aria-label="When it was taken">
+        <button class="now-btn" id="bpNowBtn" type="button">Now</button>
+      </div>
+      <div class="add-row"><button class="add-btn" id="addBpBtn" type="button">Add</button></div>
+      <div class="status" id="bpStatus" role="status" aria-live="polite"></div>
     </div>
 
     <div class="review-bar">
@@ -624,7 +664,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v4.7-meds-ingredients';
+  var APP_BUILD = 'fe-v4.8-blood-pressure';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var GLANCE_KEY = 'ticketrail.glance';   // remembers the glance period between opens
@@ -654,6 +694,7 @@
   var foodInput = $('foodInput'), mealTime = $('mealTime'), amountInput = $('amountInput');
   var symptomInput = $('symptomInput'), symptomTime = $('symptomTime');
   var bathroomInput = $('bathroomInput'), bathroomTime = $('bathroomTime'), bristolDesc = $('bristolDesc');
+  var bpSys = $('bpSys'), bpDia = $('bpDia'), bpPulse = $('bpPulse'), bpNote = $('bpNote'), bpTime = $('bpTime'), bpStatus = $('bpStatus');
   var mealStatus = $('mealStatus'), symptomStatus = $('symptomStatus'), bathroomStatus = $('bathroomStatus'), reviewStatus = $('reviewStatus');
   var reviewBtn = $('reviewBtn'), reviewPanel = $('reviewPanel');
   var mealBtns = [].slice.call(document.querySelectorAll('#mealWriter .meal-btn'));
@@ -718,6 +759,7 @@
     });
     outbox.forEach(function (op) {
       if (op.op === 'append') list.push(Object.assign({ id: op.tempId, pending: true, kind: op.kind }, op.entry));
+      if (op.op === 'bp_save') list.push(Object.assign({ id: op.tempId, pending: true, kind: 'bp' }, op.payload, { text: op.payload.text || '' }));
     });
     return list;
   }
@@ -865,12 +907,13 @@
       var list = document.createElement('ul'); list.className = 'tickets';
       g.items.forEach(function (e) {
         var li = document.createElement('li');
-        li.className = 'ticket' + (e.kind === 'symptom' ? ' symptom' : (e.kind === 'bathroom' ? ' bowel' : (e.kind === 'sleep' ? ' sleep' : (e.kind === 'activity' ? ' activity' : (e.kind === 'dose' ? ' dose' : ''))))) + (e.pending ? ' pending' : '');
+        li.className = 'ticket' + (e.kind === 'symptom' ? ' symptom' : (e.kind === 'bathroom' ? ' bowel' : (e.kind === 'sleep' ? ' sleep' : (e.kind === 'activity' ? ' activity' : (e.kind === 'dose' ? ' dose' : (e.kind === 'bp' ? ' bp' : '')))))) + (e.pending ? ' pending' : '');
         var top = document.createElement('div'); top.className = 'ticket-top';
         var stamp = document.createElement('span');
         if (e.kind === 'meal') { stamp.className = 'stamp ' + e.meal; stamp.textContent = e.meal; }
         else if (e.kind === 'bathroom') { stamp.className = 'stamp Bathroom'; stamp.textContent = 'Bathroom'; }
         else if (e.kind === 'dose') { stamp.className = 'stamp Dose'; stamp.textContent = 'Dose'; }
+        else if (e.kind === 'bp') { stamp.className = 'stamp BP'; stamp.textContent = 'Blood pressure'; }
         else if (e.kind === 'activity') {
           stamp.className = 'stamp Activity';
           stamp.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 3l-6 9h4l-1.5 9 6.5-10h-4.2L13.5 3z"/></svg>';
@@ -887,6 +930,13 @@
         var time = document.createElement('span'); time.className = 'time'; time.textContent = timeLabel(e.ts);
         top.appendChild(time); li.appendChild(top);
 
+        if (e.kind === 'bp') {
+          var bpLine = document.createElement('div'); bpLine.className = 'bp-reading';
+          bpLine.textContent = e.systolic + '/' + e.diastolic;
+          var unit = document.createElement('small');
+          unit.textContent = 'mmHg' + (e.pulse ? ('  \u00b7  pulse ' + e.pulse) : '') + (e.source === 'garmin' ? '  \u00b7  Garmin' : '');
+          bpLine.appendChild(unit); li.appendChild(bpLine);
+        }
         if (e.kind === 'dose') {
           var dl = document.createElement('p'); dl.className = 'ticket-text';
           dl.textContent = e.name + (e.dose ? ('  \u2014  ' + e.dose) : '');
@@ -1031,6 +1081,21 @@
     bathroomInput.value = ''; bathroomTime.value = toLocalInputValue();
     saveCache(); render(); refreshSyncPill(); flash(bathroomStatus, 'Logged.', 2500, true); flush();
   }
+  function addBp() {
+    var sys = parseInt(bpSys.value, 10), dia = parseInt(bpDia.value, 10);
+    if (!sys || !dia) { flash(bpStatus, 'Enter both numbers.'); bpSys.focus(); return; }
+    if (sys < 40 || sys > 300 || dia < 20 || dia > 200) { flash(bpStatus, 'That looks out of range \u2014 check the numbers.'); return; }
+    if (dia >= sys) { flash(bpStatus, 'The top number should be higher than the bottom one.'); return; }
+    var pulse = parseInt(bpPulse.value, 10);
+    var ts = tsFromInput(bpTime.value) || Date.now();
+    outbox.push({ op: 'bp_save', tempId: 'tmp-bp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+      payload: { systolic: sys, diastolic: dia, pulse: isFinite(pulse) ? pulse : '', ts: ts,
+                 source: 'manual', text: bpNote.value.trim() } });
+    bpSys.value = ''; bpDia.value = ''; bpPulse.value = ''; bpNote.value = '';
+    bpTime.value = toLocalInputValue();
+    saveCache(); render(); refreshSyncPill(); flash(bpStatus, 'Logged.', 2500, true); flush();
+  }
+
   function updateBristolDesc() {
     bristolDesc.innerHTML = '';
     var strong = document.createElement('b'); strong.textContent = 'Type ' + selectedBristol + ' \u00b7 ';
@@ -1136,6 +1201,7 @@
       else if (op.op === 'med_stop') call = post({ action: 'med_stop', key: op.key, stopped: op.stopped });
       else if (op.op === 'med_delete') call = post({ action: 'med_delete', key: op.key });
       else if (op.op === 'dose_save') call = post({ action: 'dose_save', name: op.name, dose: op.dose, ts: op.ts });
+      else if (op.op === 'bp_save') call = post(Object.assign({ action: 'bp_save' }, op.payload));
       else if (op.op === 'symptom_type_save') call = post({ action: 'symptom_type_save', label: op.label, daily: op.daily, active: op.active });
       else if (op.op === 'symptom_type_delete') call = post({ action: 'symptom_type_delete', key: op.key });
       else call = Promise.resolve({ ok: true });
@@ -1175,6 +1241,8 @@
     (res.meals || []).forEach(function (m) { out.push({ kind: 'meal', id: m.id, ts: Number(m.ts), text: m.text, meal: m.meal, amount: m.amount || '' }); });
     (res.symptoms || []).forEach(function (s) { out.push({ kind: 'symptom', id: s.id, ts: Number(s.ts), text: s.text, severity: Number(s.severity), type: s.type || '' }); });
     (res.bathroom || []).forEach(function (b) { out.push({ kind: 'bathroom', id: b.id, ts: Number(b.ts), text: b.text || '', bristol: Number(b.bristol) }); });
+    (res.bp || []).forEach(function (b) { out.push({ kind: 'bp', id: b.id, ts: Number(b.ts), text: b.text || '',
+      systolic: Number(b.systolic), diastolic: Number(b.diastolic), pulse: b.pulse, source: b.source }); });
     (res.doses || []).forEach(function (d) { out.push({ kind: 'dose', id: d.id, ts: Number(d.ts), text: d.text || '', name: d.name, dose: d.dose || '' }); });
     (res.wearable || []).forEach(function (w) {
       var d = String(w.date || '').slice(0, 10);
@@ -1940,11 +2008,11 @@
   histBack.addEventListener('click', function (ev) { if (ev.target === histBack) closeHistory(); });
 
   // ================= tabs / inputs =================
-  var tabMeal = $('tabMeal'), tabSymptom = $('tabSymptom'), tabBathroom = $('tabBathroom');
-  var mealWriter = $('mealWriter'), symptomWriter = $('symptomWriter'), bathroomWriter = $('bathroomWriter');
+  var tabMeal = $('tabMeal'), tabSymptom = $('tabSymptom'), tabBathroom = $('tabBathroom'), tabBp = $('tabBp');
+  var mealWriter = $('mealWriter'), symptomWriter = $('symptomWriter'), bathroomWriter = $('bathroomWriter'), bpWriter = $('bpWriter');
   function showTab(which) {
-    var tabs = { meal: tabMeal, symptom: tabSymptom, bathroom: tabBathroom };
-    var writers = { meal: mealWriter, symptom: symptomWriter, bathroom: bathroomWriter };
+    var tabs = { meal: tabMeal, symptom: tabSymptom, bathroom: tabBathroom, bp: tabBp };
+    var writers = { meal: mealWriter, symptom: symptomWriter, bathroom: bathroomWriter, bp: bpWriter };
     Object.keys(tabs).forEach(function (k) {
       tabs[k].classList.toggle('on', which === k);
       tabs[k].setAttribute('aria-selected', String(which === k));
@@ -1953,10 +2021,12 @@
     if (which === 'meal' && !mealTime.value) mealTime.value = toLocalInputValue();
     if (which === 'symptom' && !symptomTime.value) symptomTime.value = toLocalInputValue();
     if (which === 'bathroom' && !bathroomTime.value) bathroomTime.value = toLocalInputValue();
+    if (which === 'bp' && !bpTime.value) bpTime.value = toLocalInputValue();
   }
   tabMeal.addEventListener('click', function () { showTab('meal'); });
   tabSymptom.addEventListener('click', function () { showTab('symptom'); });
   tabBathroom.addEventListener('click', function () { showTab('bathroom'); });
+  tabBp.addEventListener('click', function () { showTab('bp'); });
   mealBtns.forEach(function (b) { b.addEventListener('click', function () { selectedMeal = b.getAttribute('data-meal'); mealBtns.forEach(function (x) { x.classList.toggle('on', x === b); }); }); });
   sevBtns.forEach(function (b) { b.addEventListener('click', function () { selectedSev = parseInt(b.getAttribute('data-sev'), 10); sevBtns.forEach(function (x) { x.classList.toggle('on', x === b); }); }); });
   bristolBtns.forEach(function (b) { b.addEventListener('click', function () { selectedBristol = parseInt(b.getAttribute('data-b'), 10); bristolBtns.forEach(function (x) { x.classList.toggle('on', x === b); }); updateBristolDesc(); }); });
@@ -1966,6 +2036,9 @@
   $('addMealBtn').addEventListener('click', addMeal);
   $('addSymptomBtn').addEventListener('click', addSymptom);
   $('addBathroomBtn').addEventListener('click', addBathroom);
+  $('addBpBtn').addEventListener('click', addBp);
+  $('bpNowBtn').addEventListener('click', function () { bpTime.value = toLocalInputValue(); });
+  bpDia.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') addBp(); });
   foodInput.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') addMeal(); });
   symptomInput.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') addSymptom(); });
   bathroomInput.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') addBathroom(); });
@@ -2186,6 +2259,14 @@
       bms.forEach(function (e) { bands[bristolBand(e.bristol)]++; });
       rows.push('<div class="k"><b>Bowel movements:</b> ' + bms.length + ' (' + bands.Normal + ' normal, ' + bands.Loose + ' loose, ' + bands.Constipation + ' constipation)</div>');
     } else { rows.push('<div class="k"><b>Bowel movements:</b> 0</div>'); }
+    var bps = all.filter(function (e) { return e.kind === 'bp'; });
+    if (bps.length) {
+      var avgS = Math.round(bps.reduce(function (a, e) { return a + e.systolic; }, 0) / bps.length);
+      var avgD = Math.round(bps.reduce(function (a, e) { return a + e.diastolic; }, 0) / bps.length);
+      var maxS = Math.max.apply(null, bps.map(function (e) { return e.systolic; }));
+      var minS = Math.min.apply(null, bps.map(function (e) { return e.systolic; }));
+      rows.push('<div class="k"><b>Blood pressure:</b> ' + bps.length + ' readings, avg ' + avgS + '/' + avgD + ', systolic range ' + minS + '-' + maxS + '</div>');
+    }
     var sleeps = all.filter(function (e) { return e.kind === 'sleep' && e.sleepHours !== '' && e.sleepHours != null; });
     if (sleeps.length) {
       var avgH = sleeps.reduce(function (a, e) { return a + e.sleepHours; }, 0) / sleeps.length;
@@ -2215,6 +2296,10 @@
           if (e.restingHR) parts2.push('resting HR ' + e.restingHR);
           if (e.hrv) parts2.push('HRV ' + e.hrv);
           detail = esc(parts2.join(', '));
+        }
+        else if (e.kind === 'bp') {
+          type = 'Blood pressure';
+          detail = e.systolic + '/' + e.diastolic + ' mmHg' + (e.pulse ? (', pulse ' + e.pulse) : '') + (e.text ? ('  &mdash;  ' + esc(e.text)) : '');
         }
         else if (e.kind === 'dose') {
           type = 'Dose';

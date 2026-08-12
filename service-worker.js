@@ -3,7 +3,7 @@
    and scans offline. Data lives in localStorage and syncs to your Google Sheet when
    online. Only the AI review and Open Food Facts lookups need a live connection. */
 
-const CACHE = 'ticketrail-v18';
+const CACHE = 'ticketrail-v19';
 const SHELL = [
   './',
   './index.html',

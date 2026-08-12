@@ -250,6 +250,22 @@
   @media (max-width: 420px) { .brand { font-size: 28px; } .meal-btn { padding: 6px 9px; font-size: 13px; } }
 
   .cfg-tools { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .modal.modal-wide { max-width: 680px; }
+  .trend-block { margin-top: 20px; }
+  .trend-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+  .trend-title { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; color: #23211C; }
+  .trend-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #A8A395; margin-left: auto; }
+  .trend-chart { width: 100%; height: auto; display: block; background: #FBF9F2; border: 1px solid #E4DFD0; border-radius: 3px; }
+  .trend-empty { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #A8A395; padding: 10px 0; }
+  .ep-row { display: flex; align-items: baseline; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #E4DFD0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  .ep-row:last-child { border-bottom: none; }
+  .ep-when { font-weight: 600; }
+  .ep-len { color: #77828B; font-size: 11px; }
+  .ep-peak { margin-left: auto; font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 13px; padding: 1px 8px; border-radius: 2px; border: 1px solid #DCC0BE; color: #A03332; }
+  .ep-peak.p4 { background: #F3E4E1; } .ep-peak.p5 { background: #A03332; color: #FDF7F6; border-color: #A03332; }
+  .ep-types { font-size: 10px; color: #77828B; width: 100%; margin-top: 2px; }
+  .wx-credit { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #B8B3A4; margin-top: 12px; text-align: right; }
+  .wx-credit a { color: #A8A395; }
   .med-add-grid { display: flex; gap: 8px; margin-top: 8px; }
   .med-add-grid input { flex: 1; min-width: 0; }
   .med-add-grid select { flex: 0 0 auto; font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; padding: 7px 8px; border: 2px solid #B8B3A4; border-radius: 2px; background: #fff; color: #23211C; }
@@ -502,6 +518,7 @@
     </div>
     <div class="modal-msg" id="cfgMsg"></div>
     <div class="cfg-tools">
+      <button class="btn-ghost" id="openTrendsBtn" type="button">Trends &amp; flares&hellip;</button>
       <button class="btn-ghost" id="openMedsBtn" type="button">Meds &amp; supplements&hellip;</button>
       <button class="btn-ghost" id="openExportBtn" type="button">Export report&hellip;</button>
     </div>
@@ -607,6 +624,26 @@
   </div>
 </div>
 
+<!-- Trends & flares -->
+<div class="modal-back" id="trendsBack">
+  <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="trendsTitle">
+    <h2 id="trendsTitle">Trends &amp; flares</h2>
+    <div class="opt-group" id="trendRangeGroup" role="group" aria-label="Range">
+      <span class="opt-label">Range</span>
+      <button class="opt-btn" data-tr="30" type="button">30d</button>
+      <button class="opt-btn on" data-tr="60" type="button">60d</button>
+      <button class="opt-btn" data-tr="90" type="button">90d</button>
+    </div>
+    <div id="trendsBody"></div>
+    <div class="modal-btns">
+      <button class="btn-ghost" id="weatherSyncBtn" type="button">Sync weather</button>
+      <button class="btn-ghost" id="trendsClose" type="button">Close</button>
+    </div>
+    <div class="modal-msg" id="trendsMsg"></div>
+    <p class="wx-credit">Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</p>
+  </div>
+</div>
+
 <!-- Meds & supplements -->
 <div class="modal-back" id="medsBack">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="medsTitle">
@@ -664,7 +701,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v4.8-blood-pressure';
+  var APP_BUILD = 'fe-v4.9-weather-trends';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var GLANCE_KEY = 'ticketrail.glance';   // remembers the glance period between opens
@@ -678,7 +715,7 @@
   function bristolBand(n) { return n <= 2 ? 'Constipation' : (n >= 6 ? 'Loose' : 'Normal'); }
   function bandClass(n) { return n <= 2 ? 'band-constipation' : (n >= 6 ? 'band-loose' : 'band-normal'); }
 
-  var cfg = null, server = [], outbox = [], products = [], dishes = [], symTypes = [], meds = [];
+  var cfg = null, server = [], outbox = [], products = [], dishes = [], symTypes = [], meds = [], weather = [];
   var selectedMeal = 'Breakfast', selectedSev = 3, selectedBristol = 4, syncing = false;
   var selectedSymType = '';   // label of the chosen symptom type ('' = none picked yet)
   var pendingUpc = null, pendingUpcSave = false, pendingBrand = '', pendingIngredients = '';  // link a scanned product to the next meal add
@@ -709,10 +746,10 @@
   // ---- persistence
   function loadLocal() {
     try { cfg = JSON.parse(localStorage.getItem(CFG_KEY)) || null; } catch (e) { cfg = null; }
-    try { var c = JSON.parse(localStorage.getItem(CACHE_KEY)); if (c) { server = c.server || []; outbox = c.outbox || []; products = c.products || []; dishes = c.dishes || []; symTypes = c.symTypes || []; meds = c.meds || []; } }
-    catch (e) { server = []; outbox = []; products = []; dishes = []; symTypes = []; meds = []; }
+    try { var c = JSON.parse(localStorage.getItem(CACHE_KEY)); if (c) { server = c.server || []; outbox = c.outbox || []; products = c.products || []; dishes = c.dishes || []; symTypes = c.symTypes || []; meds = c.meds || []; weather = c.weather || []; } }
+    catch (e) { server = []; outbox = []; products = []; dishes = []; symTypes = []; meds = []; weather = []; }
   }
-  function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ server: server, outbox: outbox, products: products, dishes: dishes, symTypes: symTypes, meds: meds })); } catch (e) {} }
+  function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ server: server, outbox: outbox, products: products, dishes: dishes, symTypes: symTypes, meds: meds, weather: weather })); } catch (e) {} }
   function saveCfg() { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {} }
 
   function post(payload) {
@@ -1219,7 +1256,7 @@
   function refresh() {
     if (!cfg || !navigator.onLine) { refreshSyncPill(); return Promise.resolve(); }
     return post({ action: 'list' }).then(function (res) {
-      if (res && res.ok) { server = normalize(res); saveCache(); }
+      if (res && res.ok) { server = normalize(res); weather = res.weather || weather; saveCache(); }
       return post({ action: 'product_list' });
     }).then(function (pres) {
       if (pres && pres.ok && Array.isArray(pres.products)) { products = pres.products; saveCache(); }
@@ -2070,6 +2107,269 @@
 
   window.addEventListener('online', function () { flush(); });
   window.addEventListener('offline', function () { refreshSyncPill(); });
+
+  // ================= Trends & flares =================
+  var trendsBack = $('trendsBack'), trendsBody = $('trendsBody'), trendsMsg = $('trendsMsg');
+  var trendRange = 60;
+
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  function svgEl(name, attrs) {
+    var el = document.createElementNS(SVGNS, name);
+    Object.keys(attrs || {}).forEach(function (k) { el.setAttribute(k, attrs[k]); });
+    return el;
+  }
+
+  function dayKeyOf(ts) { return dayKey(ts); }
+  function dayList(days) {
+    var out = [], now = new Date();
+    var t = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    for (var i = days - 1; i >= 0; i--) out.push(dayKey(t - i * 86400000));
+    return out;
+  }
+
+  // Simple line/area chart over a fixed list of days. `series` = {key -> value|null}.
+  function lineChart(days, series, opts) {
+    opts = opts || {};
+    var W = 640, H = opts.height || 130, padL = 34, padR = 8, padT = 10, padB = 18;
+    var svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'trend-chart',
+                             preserveAspectRatio: 'none', role: 'img' });
+    var vals = days.map(function (d) { return series[d]; }).filter(function (v) { return v != null && isFinite(v); });
+    if (!vals.length) return null;
+    var lo = opts.min != null ? opts.min : Math.min.apply(null, vals);
+    var hi = opts.max != null ? opts.max : Math.max.apply(null, vals);
+    if (hi === lo) { hi = lo + 1; lo = lo - 1; }
+    var pad = (hi - lo) * 0.12; hi += pad; lo -= pad;
+    function x(i) { return padL + (i / Math.max(1, days.length - 1)) * (W - padL - padR); }
+    function y(v) { return padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB); }
+
+    // gridlines + axis labels
+    [0, 0.5, 1].forEach(function (f) {
+      var v = lo + f * (hi - lo), yy = y(v);
+      svg.appendChild(svgEl('line', { x1: padL, y1: yy, x2: W - padR, y2: yy, stroke: '#E4DFD0', 'stroke-width': 1 }));
+      var t = svgEl('text', { x: 4, y: yy + 3, fill: '#A8A395', 'font-size': 9, 'font-family': 'IBM Plex Mono, monospace' });
+      t.textContent = (Math.round(v * 10) / 10);
+      svg.appendChild(t);
+    });
+
+    // path across present values (gaps break the line)
+    var d = '', open = false;
+    days.forEach(function (dd, i) {
+      var v = series[dd];
+      if (v == null || !isFinite(v)) { open = false; return; }
+      d += (open ? ' L' : ' M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1);
+      open = true;
+    });
+    if (d) svg.appendChild(svgEl('path', { d: d.trim(), fill: 'none', stroke: opts.color || '#23211C',
+                                           'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round',
+                                           'vector-effect': 'non-scaling-stroke' }));
+    // points
+    days.forEach(function (dd, i) {
+      var v = series[dd];
+      if (v == null || !isFinite(v)) return;
+      svg.appendChild(svgEl('circle', { cx: x(i).toFixed(1), cy: y(v).toFixed(1), r: 2, fill: opts.color || '#23211C' }));
+    });
+    // date ends
+    [[0, days[0]], [days.length - 1, days[days.length - 1]]].forEach(function (p, idx) {
+      var t = svgEl('text', { x: idx === 0 ? padL : W - padR, y: H - 5, fill: '#A8A395', 'font-size': 9,
+                              'font-family': 'IBM Plex Mono, monospace', 'text-anchor': idx === 0 ? 'start' : 'end' });
+      t.textContent = String(p[1]).slice(5);
+      svg.appendChild(t);
+    });
+    return svg;
+  }
+
+  function barChart(days, series, opts) {
+    opts = opts || {};
+    var W = 640, H = opts.height || 110, padL = 34, padR = 8, padT = 10, padB = 18;
+    var svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'trend-chart', preserveAspectRatio: 'none', role: 'img' });
+    var vals = days.map(function (d) { return series[d] || 0; });
+    var hi = Math.max.apply(null, vals); if (!hi) return null;
+    var bw = (W - padL - padR) / days.length;
+    [0, hi].forEach(function (v) {
+      var yy = padT + (1 - (hi ? v / hi : 0)) * (H - padT - padB);
+      svg.appendChild(svgEl('line', { x1: padL, y1: yy, x2: W - padR, y2: yy, stroke: '#E4DFD0', 'stroke-width': 1 }));
+      var t = svgEl('text', { x: 4, y: yy + 3, fill: '#A8A395', 'font-size': 9, 'font-family': 'IBM Plex Mono, monospace' });
+      t.textContent = v; svg.appendChild(t);
+    });
+    days.forEach(function (d, i) {
+      var v = series[d] || 0; if (!v) return;
+      var h = (v / hi) * (H - padT - padB);
+      svg.appendChild(svgEl('rect', { x: (padL + i * bw + bw * 0.15).toFixed(1), y: (padT + (H - padT - padB) - h).toFixed(1),
+                                      width: Math.max(1, bw * 0.7).toFixed(1), height: h.toFixed(1),
+                                      fill: opts.color || '#A03332', rx: 1 }));
+    });
+    [[0, days[0]], [days.length - 1, days[days.length - 1]]].forEach(function (p, idx) {
+      var t = svgEl('text', { x: idx === 0 ? padL : W - padR, y: H - 5, fill: '#A8A395', 'font-size': 9,
+                              'font-family': 'IBM Plex Mono, monospace', 'text-anchor': idx === 0 ? 'start' : 'end' });
+      t.textContent = String(p[1]).slice(5); svg.appendChild(t);
+    });
+    return svg;
+  }
+
+  function trendBlock(title, sub, node) {
+    var wrap = document.createElement('div'); wrap.className = 'trend-block';
+    var head = document.createElement('div'); head.className = 'trend-head';
+    var t = document.createElement('span'); t.className = 'trend-title'; t.textContent = title;
+    head.appendChild(t);
+    if (sub) { var sEl = document.createElement('span'); sEl.className = 'trend-sub'; sEl.textContent = sub; head.appendChild(sEl); }
+    wrap.appendChild(head);
+    if (node) wrap.appendChild(node);
+    else { var e = document.createElement('div'); e.className = 'trend-empty'; e.textContent = 'Not enough data yet.'; wrap.appendChild(e); }
+    return wrap;
+  }
+
+  // Client-side mirror of the backend episode grouping, for display.
+  function computeEpisodes(entries) {
+    var byDay = {};
+    entries.forEach(function (e) {
+      if (e.kind !== 'symptom') return;
+      var d = dayKey(e.ts);
+      if (!byDay[d]) byDay[d] = { count: 0, peak: 0, types: {} };
+      byDay[d].count++;
+      var sev = Number(e.severity) || 0;
+      if (sev > byDay[d].peak) byDay[d].peak = sev;
+      if (e.type) byDay[d].types[e.type] = (byDay[d].types[e.type] || 0) + 1;
+    });
+    var days = Object.keys(byDay).sort();
+    if (!days.length) return [];
+    function dn(d) { return Date.parse(d + 'T12:00:00'); }
+    var runs = [], cur = null;
+    days.forEach(function (d) {
+      if (cur && (dn(d) - dn(cur.last)) <= 2 * 86400000) cur.last = d;
+      else { if (cur) runs.push(cur); cur = { first: d, last: d }; }
+    });
+    if (cur) runs.push(cur);
+    return runs.map(function (r) {
+      var t = dn(r.first), end = dn(r.last), peak = 0, entriesN = 0, types = {}, len = 0;
+      while (t <= end) {
+        var d = dayKey(t); len++;
+        if (byDay[d]) {
+          entriesN += byDay[d].count;
+          if (byDay[d].peak > peak) peak = byDay[d].peak;
+          Object.keys(byDay[d].types).forEach(function (k) { types[k] = (types[k] || 0) + byDay[d].types[k]; });
+        }
+        t += 86400000;
+      }
+      return { start: r.first, end: r.last, days: len, entries: entriesN, peak: peak,
+               types: Object.keys(types).sort(function (a, b) { return types[b] - types[a]; }).slice(0, 4) };
+    }).reverse();
+  }
+
+  function renderTrends() {
+    trendsBody.textContent = '';
+    var days = dayList(trendRange);
+    var since = Date.parse(days[0] + 'T00:00:00');
+    var all = viewEntries().filter(function (e) { return e.ts >= since; });
+
+    // symptom load per day (count) and peak severity per day
+    var load = {}, peak = {};
+    all.forEach(function (e) {
+      if (e.kind !== 'symptom') return;
+      var d = dayKey(e.ts);
+      load[d] = (load[d] || 0) + 1;
+      var sv = Number(e.severity) || 0;
+      if (sv > (peak[d] || 0)) peak[d] = sv;
+    });
+    trendsBody.appendChild(trendBlock('Symptom load', 'entries per day', barChart(days, load, { color: '#A03332' })));
+    trendsBody.appendChild(trendBlock('Peak severity', '1-5 per day', lineChart(days, peak, { color: '#A03332', min: 0, max: 5, height: 110 })));
+
+    // sleep
+    var sleepS = {};
+    all.forEach(function (e) { if (e.kind === 'sleep' && e.sleepHours) sleepS[e.date || dayKey(e.ts)] = Number(e.sleepHours); });
+    trendsBody.appendChild(trendBlock('Sleep', 'hours per night', lineChart(days, sleepS, { color: '#4A5568' })));
+
+    // steps
+    var stepS = {};
+    all.forEach(function (e) { if (e.kind === 'activity' && e.steps) stepS[e.date || dayKey(e.ts)] = Number(e.steps); });
+    trendsBody.appendChild(trendBlock('Steps', 'per day', lineChart(days, stepS, { color: '#6F8F6B' })));
+
+    // blood pressure (daily mean of readings)
+    var bpAgg = {};
+    all.forEach(function (e) {
+      if (e.kind !== 'bp') return;
+      var d = dayKey(e.ts);
+      if (!bpAgg[d]) bpAgg[d] = { s: [], d: [] };
+      bpAgg[d].s.push(Number(e.systolic)); bpAgg[d].d.push(Number(e.diastolic));
+    });
+    var sysS = {}, diaS = {};
+    Object.keys(bpAgg).forEach(function (d) {
+      var a = bpAgg[d];
+      sysS[d] = Math.round(a.s.reduce(function (x, y) { return x + y; }, 0) / a.s.length);
+      diaS[d] = Math.round(a.d.reduce(function (x, y) { return x + y; }, 0) / a.d.length);
+    });
+    var bpNode = lineChart(days, sysS, { color: '#3D5473' });
+    if (bpNode) {
+      // overlay diastolic on the same axes by redrawing with a shared range
+      var allBp = Object.keys(sysS).map(function (k) { return sysS[k]; })
+        .concat(Object.keys(diaS).map(function (k) { return diaS[k]; }));
+      bpNode = lineChart(days, sysS, { color: '#3D5473', min: Math.min.apply(null, allBp), max: Math.max.apply(null, allBp) });
+      var dNode = lineChart(days, diaS, { color: '#8FA0B8', min: Math.min.apply(null, allBp), max: Math.max.apply(null, allBp) });
+      if (dNode) [].slice.call(dNode.childNodes).forEach(function (n) {
+        if (n.tagName === 'path' || n.tagName === 'circle') bpNode.appendChild(n.cloneNode(true));
+      });
+    }
+    trendsBody.appendChild(trendBlock('Blood pressure', 'daily average, systolic over diastolic', bpNode));
+
+    // barometric pressure
+    var wxS = {};
+    weather.forEach(function (w) {
+      var d = String(w.date || '').slice(0, 10);
+      if (d && w.pressureMean !== '' && w.pressureMean != null) wxS[d] = Number(w.pressureMean);
+    });
+    var wxNode = lineChart(days, wxS, { color: '#8A6A0B' });
+    trendsBody.appendChild(trendBlock('Barometric pressure', wxNode ? 'hPa daily mean' : 'tap Sync weather below', wxNode));
+
+    // episodes
+    var eps = computeEpisodes(all);
+    var epWrap = document.createElement('div');
+    if (!eps.length) { var n = document.createElement('div'); n.className = 'trend-empty'; n.textContent = 'No symptom episodes in this range.'; epWrap.appendChild(n); }
+    else eps.forEach(function (ep) {
+      var row = document.createElement('div'); row.className = 'ep-row';
+      var when = document.createElement('span'); when.className = 'ep-when';
+      when.textContent = ep.start === ep.end ? ep.start.slice(5) : (ep.start.slice(5) + ' \u2013 ' + ep.end.slice(5));
+      var len = document.createElement('span'); len.className = 'ep-len';
+      len.textContent = ep.days + (ep.days === 1 ? ' day' : ' days') + ' \u00b7 ' + ep.entries + ' entries';
+      var pk = document.createElement('span'); pk.className = 'ep-peak' + (ep.peak >= 5 ? ' p5' : (ep.peak >= 4 ? ' p4' : ''));
+      pk.textContent = 'peak ' + (ep.peak || '?');
+      row.appendChild(when); row.appendChild(len); row.appendChild(pk);
+      if (ep.types.length) { var ty = document.createElement('div'); ty.className = 'ep-types'; ty.textContent = ep.types.join(', '); row.appendChild(ty); }
+      epWrap.appendChild(row);
+    });
+    trendsBody.appendChild(trendBlock('Flares', eps.length ? eps.length + ' episode' + (eps.length === 1 ? '' : 's') : '', epWrap));
+  }
+
+  function openTrends() {
+    trendsMsg.textContent = ''; trendsMsg.className = 'modal-msg';
+    closeModal(); trendsBack.classList.add('on'); renderTrends();
+  }
+  function closeTrends() { trendsBack.classList.remove('on'); }
+
+  [].slice.call(document.querySelectorAll('#trendRangeGroup .opt-btn')).forEach(function (b) {
+    b.addEventListener('click', function () {
+      trendRange = parseInt(b.getAttribute('data-tr'), 10);
+      [].slice.call(document.querySelectorAll('#trendRangeGroup .opt-btn')).forEach(function (x) { x.classList.toggle('on', x === b); });
+      renderTrends();
+    });
+  });
+  $('openTrendsBtn').addEventListener('click', openTrends);
+  $('trendsClose').addEventListener('click', closeTrends);
+  trendsBack.addEventListener('click', function (ev) { if (ev.target === trendsBack) closeTrends(); });
+  $('weatherSyncBtn').addEventListener('click', function () {
+    if (!cfg) { trendsMsg.className = 'modal-msg err'; trendsMsg.textContent = 'Connect your rail first.'; return; }
+    if (!navigator.onLine) { trendsMsg.className = 'modal-msg err'; trendsMsg.textContent = 'Weather sync needs a connection.'; return; }
+    trendsMsg.className = 'modal-msg'; trendsMsg.textContent = 'Fetching weather\u2026';
+    post({ action: 'weather_sync', days: 92 }).then(function (res) {
+      if (res && res.ok) {
+        trendsMsg.className = 'modal-msg ok';
+        trendsMsg.textContent = 'Weather updated (' + res.saved + ' days).';
+        return refresh().then(renderTrends);
+      }
+      trendsMsg.className = 'modal-msg err';
+      trendsMsg.textContent = (res && res.error) ? res.error : 'Weather sync failed.';
+    }).catch(function () {
+      trendsMsg.className = 'modal-msg err'; trendsMsg.textContent = 'Weather sync failed.';
+    });
+  });
 
   // ================= Meds & supplements =================
   var medsBack = $('medsBack'), medsList = $('medsList'), medsMsg = $('medsMsg');

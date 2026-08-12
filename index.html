@@ -227,6 +227,18 @@
   .lib-op + .lib-op { border-top: 1px solid #E4DFD0; }
   .lib-edit { padding: 10px 12px; background: #FBF9F2; }
   .lib-edit input[type="text"] { width: 100%; box-sizing: border-box; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #23211C; background: #fff; border: 2px solid #B8B3A4; border-radius: 2px; padding: 7px 8px; }
+  .ing-table { margin-top: 6px; border: 1px solid #D8D3C4; border-radius: 3px; overflow: hidden; background: #fff; }
+  .ing-head, .ing-row { display: grid; grid-template-columns: 1fr 56px 84px 30px; gap: 4px; align-items: center; }
+  .ing-head { background: #F0EDE3; padding: 5px 6px; }
+  .ing-head span { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: #A8A395; }
+  .ing-row { padding: 4px 6px; border-top: 1px solid #EFEBE0; }
+  .ing-row input, .ing-row select { width: 100%; box-sizing: border-box; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #23211C; background: #fff; border: 1px solid #D8D3C4; border-radius: 2px; padding: 6px 5px; }
+  .ing-row input:focus, .ing-row select:focus { outline: 2px solid #E7AF12; outline-offset: -1px; }
+  .ing-del { background: transparent; border: none; color: #B8B3A4; font-size: 18px; line-height: 1; cursor: pointer; padding: 0; }
+  .ing-del:hover { color: #A03332; }
+  .ing-tools { display: flex; gap: 8px; margin-top: 8px; }
+  .ing-add { flex: 1; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.5px; background: transparent; border: 1px dashed #B8B3A4; color: #77828B; padding: 7px 8px; border-radius: 2px; cursor: pointer; }
+  .ing-add:hover { border-color: #23211C; color: #23211C; }
   .lib-ing-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.5px; color: #A8A395; margin-top: 10px; }
   .lib-ing { width: 100%; box-sizing: border-box; margin-top: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.5; color: #23211C; background: #fff; border: 2px solid #B8B3A4; border-radius: 2px; padding: 7px 8px; resize: vertical; }
   .lib-ing-prev { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #A8A395; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -701,7 +713,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v4.9-weather-trends';
+  var APP_BUILD = 'fe-v5.0-ingredient-rows';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var GLANCE_KEY = 'ticketrail.glance';   // remembers the glance period between opens
@@ -1232,7 +1244,7 @@
       else if (op.op === 'update') call = post({ action: 'update', id: op.id, patch: op.patch });
       else if (op.op === 'product_save') call = post({ action: 'product_save', upc: op.upc, name: op.name, meal: op.meal, brand: op.brand, ingredients: op.ingredients });
       else if (op.op === 'product_delete') call = post({ action: 'product_delete', upc: op.upc });
-      else if (op.op === 'dish_save') call = post({ action: 'dish_save', name: op.name, meal: op.meal, ingredients: op.ingredients });
+      else if (op.op === 'dish_save') call = post({ action: 'dish_save', name: op.name, meal: op.meal, ingredients: op.ingredients, items: op.items || [] });
       else if (op.op === 'dish_delete') call = post({ action: 'dish_delete', name: op.name });
       else if (op.op === 'med_save') call = post({ action: 'med_save', name: op.name, dose: op.dose, schedule: op.schedule, started: op.started, active: op.active });
       else if (op.op === 'med_stop') call = post({ action: 'med_stop', key: op.key, stopped: op.stopped });
@@ -1383,7 +1395,15 @@
     if (offline) scanSetMsg('Offline — enter it manually and it\u2019ll sync later.', false);
   }
 
+  var scanTarget = null;   // when set, a scan result fills this ingredient row instead of the meal
+
   function fillFromProduct(upc, name, meal, needsSave, detail) {
+    if (scanTarget) {
+      var t = scanTarget; scanTarget = null;
+      closeScanner();
+      if (t.nameInput) { t.nameInput.value = name || ''; t.nameInput.focus(); }
+      return;
+    }
     pendingUpc = upc; pendingUpcSave = !!needsSave;
     pendingBrand = (detail && detail.brand) || ''; pendingIngredients = (detail && detail.ingredients) || '';
     foodInput.value = name || '';
@@ -1599,6 +1619,7 @@
       if (op.name != null) cur.name = op.name;
       if (op.meal) cur.meal = op.meal;
       if (op.ingredients) cur.ingredients = op.ingredients;
+      if (op.items) { cur.items = op.items; if (!op.ingredients) cur.ingredients = itemsPreview(op.items); }
       dmap[k] = cur;
     });
     Object.keys(dDel).forEach(function (k) { delete dmap[k]; });
@@ -1663,12 +1684,66 @@
     return row;
   }
 
+  var UNITS = ['', 'g', 'oz', 'lb', 'ml', 'l', 'cup', 'tbsp', 'tsp', 'scoop', 'slice', 'piece', 'handful', 'serving'];
+
+  // Every ingredient name seen before — from products, and from every dish's rows — so typing
+  // autocompletes against things already logged instead of retyping them.
+  function ingredientVocab() {
+    var seen = {};
+    products.forEach(function (pr) { if (pr && pr.name) seen[String(pr.name).trim()] = true; });
+    dishes.forEach(function (d) {
+      parseItems(d.items).forEach(function (it) { if (it.name) seen[it.name.trim()] = true; });
+      if (!d.items && d.ingredients) {
+        String(d.ingredients).split(',').forEach(function (part) {
+          var nm = part.replace(/\([^)]*\)/g, '').trim();
+          if (nm) seen[nm] = true;
+        });
+      }
+    });
+    return Object.keys(seen).sort(function (a, b) { return a.localeCompare(b); }).slice(0, 400);
+  }
+
+  // Mirrors the backend's derived text so an offline edit previews the same way it will save.
+  function itemsPreview(items) {
+    return (items || []).map(function (it) {
+      var n = String(it.name || '').trim(); if (!n) return '';
+      var q = ((it.amount || '') + ' ' + (it.unit || '')).trim();
+      return q ? (n + ' (' + q + ')') : n;
+    }).filter(Boolean).join(', ');
+  }
+
+  function parseItems(raw) {
+    if (!raw) return [];
+    if (typeof raw === 'object' && raw.length !== undefined) return raw;
+    try { var v = JSON.parse(raw); return (v && v.length !== undefined) ? v : []; } catch (e) { return []; }
+  }
+
+  // Fall back to splitting the old free-text list so existing dishes open as rows, not a blank table.
+  function itemsFor(p) {
+    var items = parseItems(p.items);
+    if (items.length) return items;
+    if (!p.ingredients) return [];
+    return String(p.ingredients).split(',').map(function (part) {
+      var t = part.trim(); if (!t) return null;
+      var m = /^(.*?)\s*\(([^)]*)\)\s*$/.exec(t);
+      if (m) {
+        var q = m[2].trim().split(/\s+/);
+        var amt = q[0] || '', unit = q.slice(1).join(' ') || '';
+        if (!/^[\d.\/]+$/.test(amt)) { amt = ''; unit = m[2].trim(); }
+        return { name: m[1].trim(), amount: amt, unit: unit };
+      }
+      return { name: t, amount: '', unit: '' };
+    }).filter(Boolean);
+  }
+
   function editRow(row, p) {
     row.textContent = ''; row.className = 'lib-row';
     var box = document.createElement('div'); box.className = 'lib-edit'; box.style.flex = '1';
+    var isDish = (p.kind === 'dish');
 
     var nameIn = document.createElement('input'); nameIn.type = 'text'; nameIn.value = p.name || '';
     nameIn.maxLength = 200; nameIn.setAttribute('aria-label', 'Item name');
+    nameIn.placeholder = isDish ? 'Dish name (e.g. Morning smoothie)' : 'Item name';
 
     var sel = document.createElement('select');
     ['', 'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Other'].forEach(function (m) {
@@ -1676,12 +1751,59 @@
       if ((p.meal || '') === m) o.selected = true; sel.appendChild(o);
     });
 
-    var ingLbl = document.createElement('div'); ingLbl.className = 'lib-ing-label';
-    ingLbl.textContent = 'Ingredients (comma separated) — used by the review';
-    var ingIn = document.createElement('textarea'); ingIn.className = 'lib-ing';
-    ingIn.value = p.ingredients || ''; ingIn.rows = 3; ingIn.maxLength = 1000;
-    ingIn.setAttribute('aria-label', 'Ingredients');
-    ingIn.placeholder = 'e.g. greek yogurt, frozen mango, orange juice, chia seeds, creatine';
+    box.appendChild(nameIn); box.appendChild(sel);
+
+    var ingIn = null, tableBody = null, dataListId = null;
+
+    if (isDish) {
+      var lbl = document.createElement('div'); lbl.className = 'lib-ing-label'; lbl.textContent = 'Ingredients';
+      box.appendChild(lbl);
+
+      // shared datalist of previously-used ingredient names
+      dataListId = 'ingVocab-' + Math.random().toString(36).slice(2, 8);
+      var dl = document.createElement('datalist'); dl.id = dataListId;
+      ingredientVocab().forEach(function (n) { var o = document.createElement('option'); o.value = n; dl.appendChild(o); });
+      box.appendChild(dl);
+
+      var table = document.createElement('div'); table.className = 'ing-table';
+      var head = document.createElement('div'); head.className = 'ing-head';
+      ['Ingredient', 'Amt', 'Unit', ''].forEach(function (h) {
+        var c = document.createElement('span'); c.textContent = h; head.appendChild(c);
+      });
+      table.appendChild(head);
+      tableBody = document.createElement('div'); tableBody.className = 'ing-body';
+      table.appendChild(tableBody);
+      box.appendChild(table);
+
+      var existing = itemsFor(p);
+      if (!existing.length) existing = [{ name: '', amount: '', unit: '' }];
+      existing.forEach(function (it) { tableBody.appendChild(ingredientRow(it, dataListId)); });
+
+      var tools = document.createElement('div'); tools.className = 'ing-tools';
+      var addBtn = document.createElement('button'); addBtn.type = 'button'; addBtn.className = 'ing-add';
+      addBtn.textContent = '+ Add ingredient';
+      addBtn.addEventListener('click', function () {
+        var r = ingredientRow({ name: '', amount: '', unit: '' }, dataListId);
+        tableBody.appendChild(r);
+        var inp = r.querySelector('input'); if (inp) inp.focus();
+      });
+      var scanIng = document.createElement('button'); scanIng.type = 'button'; scanIng.className = 'ing-add';
+      scanIng.textContent = 'Scan barcode';
+      scanIng.addEventListener('click', function () {
+        var r = ingredientRow({ name: '', amount: '', unit: '' }, dataListId);
+        tableBody.appendChild(r);
+        scanTarget = { nameInput: r.querySelector('input') };
+        openScanner();
+      });
+      tools.appendChild(addBtn); tools.appendChild(scanIng);
+      box.appendChild(tools);
+    } else {
+      var ingLbl = document.createElement('div'); ingLbl.className = 'lib-ing-label';
+      ingLbl.textContent = 'Ingredients (from the barcode lookup)';
+      ingIn = document.createElement('textarea'); ingIn.className = 'lib-ing';
+      ingIn.value = p.ingredients || ''; ingIn.rows = 3; ingIn.maxLength = 1000;
+      box.appendChild(ingLbl); box.appendChild(ingIn);
+    }
 
     var btns = document.createElement('div'); btns.className = 'lib-edit-btns';
     var save = document.createElement('button'); save.type = 'button'; save.className = 'lib-save'; save.textContent = 'Save';
@@ -1689,24 +1811,52 @@
     save.addEventListener('click', function () {
       var nm = nameIn.value.trim();
       if (!nm) { nameIn.focus(); return; }
-      saveLibItem(p, nm, sel.value, ingIn.value.trim());
+      if (isDish) {
+        var items = [].slice.call(tableBody.children).map(function (r) {
+          var ins = r.querySelectorAll('input'), sl = r.querySelector('select');
+          return { name: ins[0].value.trim(), amount: ins[1].value.trim(), unit: sl ? sl.value : '' };
+        }).filter(function (it) { return it.name; });
+        saveLibItem(p, nm, sel.value, '', items);
+      } else {
+        saveLibItem(p, nm, sel.value, ingIn.value.trim(), null);
+      }
     });
     cancel.addEventListener('click', renderLibrary);
     btns.appendChild(cancel); btns.appendChild(save);
+    box.appendChild(btns);
 
-    box.appendChild(nameIn); box.appendChild(sel);
-    box.appendChild(ingLbl); box.appendChild(ingIn); box.appendChild(btns);
     row.appendChild(box); nameIn.focus();
+  }
+
+  function ingredientRow(it, dataListId) {
+    var r = document.createElement('div'); r.className = 'ing-row';
+    var nm = document.createElement('input'); nm.type = 'text'; nm.value = it.name || '';
+    nm.maxLength = 120; nm.placeholder = 'ingredient'; nm.setAttribute('aria-label', 'Ingredient');
+    if (dataListId) nm.setAttribute('list', dataListId);
+    var amt = document.createElement('input'); amt.type = 'text'; amt.value = it.amount || '';
+    amt.maxLength = 24; amt.placeholder = '1'; amt.inputMode = 'decimal'; amt.setAttribute('aria-label', 'Amount');
+    var un = document.createElement('select'); un.setAttribute('aria-label', 'Unit');
+    var known = UNITS.slice();
+    if (it.unit && known.indexOf(it.unit) === -1) known.push(it.unit);
+    known.forEach(function (u) {
+      var o = document.createElement('option'); o.value = u; o.textContent = u || '—';
+      if ((it.unit || '') === u) o.selected = true; un.appendChild(o);
+    });
+    var del = document.createElement('button'); del.type = 'button'; del.className = 'ing-del';
+    del.textContent = '\u00d7'; del.setAttribute('aria-label', 'Remove ingredient');
+    del.addEventListener('click', function () { r.parentNode.removeChild(r); });
+    r.appendChild(nm); r.appendChild(amt); r.appendChild(un); r.appendChild(del);
+    return r;
   }
 
   // Handles products (keyed by UPC) and dishes (keyed by normalised name). Renaming a dish changes
   // its key, so that case is a delete + recreate rather than an in-place update.
-  function saveLibItem(p, name, meal, ingredients) {
+  function saveLibItem(p, name, meal, ingredients, items) {
     if (p.kind === 'dish') {
       if (p.name && normName(p.name) !== normName(name)) {
         outbox.push({ op: 'dish_delete', name: p.name });
       }
-      outbox.push({ op: 'dish_save', name: name, meal: meal || '', ingredients: ingredients });
+      outbox.push({ op: 'dish_save', name: name, meal: meal || '', ingredients: ingredients, items: items || [] });
     } else {
       outbox.push({ op: 'product_save', upc: String(p.upc), name: name, meal: meal || '',
                     brand: p.brand || '', ingredients: ingredients });

@@ -60,10 +60,13 @@
   .writer-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #77828B; margin-bottom: 8px; }
   .symptom-writer .writer-label { color: #A98782; }
   .food-input { width: 100%; }
-  .dup-hint { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 8px 10px; background: #FBF3D9; border: 1px solid #E7AF12; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5A4B12; }
-  .dup-hint .dup-q { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+  .dup-hint { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 6px 8px; margin-top: 8px; padding: 8px 10px; background: #FBF3D9; border: 1px solid #E7AF12; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5A4B12; }
+  .dup-list { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+  .dup-pick { position: relative; font-family: 'Saira Condensed', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 0.5px; background: #FFFFFF; border: 1px solid #E7AF12; color: #5A4B12; padding: 4px 10px; border-radius: 2px; cursor: pointer; max-width: 100%; overflow-wrap: anywhere; text-align: left; }
+  .dup-pick:hover { background: #E7AF12; color: #23211C; }
+  .dup-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #2C5A73; margin-left: 6px; vertical-align: middle; }
+  .dup-hint .dup-q { width: 100%; }
   .dup-hint .dup-q b { font-weight: 600; }
-  .dup-use { font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; background: #E7AF12; color: #23211C; border: none; padding: 4px 10px; border-radius: 2px; cursor: pointer; white-space: nowrap; }
   .dup-x { background: transparent; border: none; color: #8A7A2E; font-size: 16px; cursor: pointer; padding: 0 4px; line-height: 1; }
   .tool-row { display: flex; gap: 8px; margin-top: 10px; }
   .tool-row .scan-btn { flex: 1; justify-content: center; }
@@ -224,6 +227,10 @@
   .lib-op + .lib-op { border-top: 1px solid #E4DFD0; }
   .lib-edit { padding: 10px 12px; background: #FBF9F2; }
   .lib-edit input[type="text"] { width: 100%; box-sizing: border-box; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #23211C; background: #fff; border: 2px solid #B8B3A4; border-radius: 2px; padding: 7px 8px; }
+  .lib-ing-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.5px; color: #A8A395; margin-top: 10px; }
+  .lib-ing { width: 100%; box-sizing: border-box; margin-top: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.5; color: #23211C; background: #fff; border: 2px solid #B8B3A4; border-radius: 2px; padding: 7px 8px; resize: vertical; }
+  .lib-ing-prev { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #A8A395; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib-ing-prev.empty { color: #C4732F; font-style: italic; }
   .lib-edit select { width: 100%; box-sizing: border-box; margin-top: 8px; font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; padding: 7px 8px; border: 2px solid #B8B3A4; border-radius: 2px; background: #fff; color: #23211C; }
   .lib-edit-btns { display: flex; gap: 8px; margin-top: 10px; }
   .lib-edit-btns button { flex: 1; font-family: 'Saira Condensed', sans-serif; font-weight: 800; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; border: none; padding: 8px; border-radius: 2px; cursor: pointer; }
@@ -242,7 +249,19 @@
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
   @media (max-width: 420px) { .brand { font-size: 28px; } .meal-btn { padding: 6px 9px; font-size: 13px; } }
 
-  .cfg-tools { margin-top: 14px; display: flex; gap: 8px; }
+  .cfg-tools { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .med-add-grid { display: flex; gap: 8px; margin-top: 8px; }
+  .med-add-grid input { flex: 1; min-width: 0; }
+  .med-add-grid select { flex: 0 0 auto; font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; padding: 7px 8px; border: 2px solid #B8B3A4; border-radius: 2px; background: #fff; color: #23211C; }
+  .med-row { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid #E4DFD0; }
+  .med-row:last-child { border-bottom: none; }
+  .med-row.stopped { opacity: 0.55; }
+  .med-main { flex: 1; min-width: 0; }
+  .med-name { font-family: 'IBM Plex Mono', monospace; font-size: 13px; overflow-wrap: anywhere; }
+  .med-meta { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #A8A395; margin-top: 3px; }
+  .ticket.dose { background: #EFE9F3; }
+  .ticket.dose::before { background-image: radial-gradient(circle at 6px 0px, transparent 5px, #EFE9F3 5px); }
+  .stamp.Dose { color: #F6F2F8; background: #6B4E86; border-color: #6B4E86; }
 
   /* Symptom type picker */
   .tabs { flex-wrap: wrap; }
@@ -443,6 +462,7 @@
     </div>
     <div class="modal-msg" id="cfgMsg"></div>
     <div class="cfg-tools">
+      <button class="btn-ghost" id="openMedsBtn" type="button">Meds &amp; supplements&hellip;</button>
       <button class="btn-ghost" id="openExportBtn" type="button">Export report&hellip;</button>
     </div>
     <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #B8B3A4;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:#A8A395">App build <span id="feBuild"></span> &middot; backend build shown at your /exec URL</div>
@@ -540,9 +560,37 @@
     <h2 id="libTitle">Your library</h2>
     <p class="note">Tap an item to use it in this meal. Search by name, brand, or ingredient.</p>
     <input type="text" id="libSearch" placeholder="Search your items&hellip;" autocomplete="off" autocapitalize="off">
+    <div class="sym-tools"><button class="sym-link" id="libNewDish" type="button">+ New dish (type ingredients)</button></div>
     <div class="lib-list" id="libList"></div>
     <div class="modal-btns"><button class="btn-ghost" id="libClose" type="button">Close</button></div>
     <div class="modal-msg" id="libMsg"></div>
+  </div>
+</div>
+
+<!-- Meds & supplements -->
+<div class="modal-back" id="medsBack">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="medsTitle">
+    <h2 id="medsTitle">Meds &amp; supplements</h2>
+    <p class="note">What you take, and when you started or stopped. Start/stop dates are the important part — they let a review compare how you felt <b>before</b> vs <b>after</b> a change, without logging every dose.</p>
+    <label for="medName">Add something</label>
+    <div class="sym-add-row">
+      <input type="text" id="medName" placeholder="e.g. Magnesium glycinate" maxlength="120" autocomplete="off">
+    </div>
+    <div class="med-add-grid">
+      <input type="text" id="medDose" placeholder="dose (e.g. 400mg)" maxlength="80">
+      <select id="medSchedule">
+        <option value="daily">daily</option>
+        <option value="2x daily">2x daily</option>
+        <option value="weekly">weekly</option>
+        <option value="as needed">as needed</option>
+      </select>
+    </div>
+    <label for="medStarted" style="margin-top:10px">Started</label>
+    <input type="date" id="medStarted">
+    <div class="modal-btns"><button class="btn-primary" id="medAdd" type="button">Add</button></div>
+    <div class="lib-list" id="medsList"></div>
+    <div class="modal-btns"><button class="btn-ghost" id="medsClose" type="button">Close</button></div>
+    <div class="modal-msg" id="medsMsg"></div>
   </div>
 </div>
 
@@ -576,7 +624,7 @@
 <script src="./zxing.min.js"></script>
 <script>
 (function () {
-  var APP_BUILD = 'fe-v4.5-aggregate';
+  var APP_BUILD = 'fe-v4.7-meds-ingredients';
   var CFG_KEY = 'ticketrail.cfg';
   var CACHE_KEY = 'ticketrail.cache';
   var GLANCE_KEY = 'ticketrail.glance';   // remembers the glance period between opens
@@ -590,7 +638,7 @@
   function bristolBand(n) { return n <= 2 ? 'Constipation' : (n >= 6 ? 'Loose' : 'Normal'); }
   function bandClass(n) { return n <= 2 ? 'band-constipation' : (n >= 6 ? 'band-loose' : 'band-normal'); }
 
-  var cfg = null, server = [], outbox = [], products = [], dishes = [], symTypes = [];
+  var cfg = null, server = [], outbox = [], products = [], dishes = [], symTypes = [], meds = [];
   var selectedMeal = 'Breakfast', selectedSev = 3, selectedBristol = 4, syncing = false;
   var selectedSymType = '';   // label of the chosen symptom type ('' = none picked yet)
   var pendingUpc = null, pendingUpcSave = false, pendingBrand = '', pendingIngredients = '';  // link a scanned product to the next meal add
@@ -620,10 +668,10 @@
   // ---- persistence
   function loadLocal() {
     try { cfg = JSON.parse(localStorage.getItem(CFG_KEY)) || null; } catch (e) { cfg = null; }
-    try { var c = JSON.parse(localStorage.getItem(CACHE_KEY)); if (c) { server = c.server || []; outbox = c.outbox || []; products = c.products || []; dishes = c.dishes || []; symTypes = c.symTypes || []; } }
-    catch (e) { server = []; outbox = []; products = []; dishes = []; symTypes = []; }
+    try { var c = JSON.parse(localStorage.getItem(CACHE_KEY)); if (c) { server = c.server || []; outbox = c.outbox || []; products = c.products || []; dishes = c.dishes || []; symTypes = c.symTypes || []; meds = c.meds || []; } }
+    catch (e) { server = []; outbox = []; products = []; dishes = []; symTypes = []; meds = []; }
   }
-  function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ server: server, outbox: outbox, products: products, dishes: dishes, symTypes: symTypes })); } catch (e) {} }
+  function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ server: server, outbox: outbox, products: products, dishes: dishes, symTypes: symTypes, meds: meds })); } catch (e) {} }
   function saveCfg() { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {} }
 
   function post(payload) {
@@ -817,11 +865,12 @@
       var list = document.createElement('ul'); list.className = 'tickets';
       g.items.forEach(function (e) {
         var li = document.createElement('li');
-        li.className = 'ticket' + (e.kind === 'symptom' ? ' symptom' : (e.kind === 'bathroom' ? ' bowel' : (e.kind === 'sleep' ? ' sleep' : (e.kind === 'activity' ? ' activity' : '')))) + (e.pending ? ' pending' : '');
+        li.className = 'ticket' + (e.kind === 'symptom' ? ' symptom' : (e.kind === 'bathroom' ? ' bowel' : (e.kind === 'sleep' ? ' sleep' : (e.kind === 'activity' ? ' activity' : (e.kind === 'dose' ? ' dose' : ''))))) + (e.pending ? ' pending' : '');
         var top = document.createElement('div'); top.className = 'ticket-top';
         var stamp = document.createElement('span');
         if (e.kind === 'meal') { stamp.className = 'stamp ' + e.meal; stamp.textContent = e.meal; }
         else if (e.kind === 'bathroom') { stamp.className = 'stamp Bathroom'; stamp.textContent = 'Bathroom'; }
+        else if (e.kind === 'dose') { stamp.className = 'stamp Dose'; stamp.textContent = 'Dose'; }
         else if (e.kind === 'activity') {
           stamp.className = 'stamp Activity';
           stamp.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 3l-6 9h4l-1.5 9 6.5-10h-4.2L13.5 3z"/></svg>';
@@ -838,6 +887,11 @@
         var time = document.createElement('span'); time.className = 'time'; time.textContent = timeLabel(e.ts);
         top.appendChild(time); li.appendChild(top);
 
+        if (e.kind === 'dose') {
+          var dl = document.createElement('p'); dl.className = 'ticket-text';
+          dl.textContent = e.name + (e.dose ? ('  \u2014  ' + e.dose) : '');
+          li.appendChild(dl);
+        }
         if (e.text) { var text = document.createElement('p'); text.className = 'ticket-text'; text.textContent = e.text; li.appendChild(text); }
 
         if (e.kind === 'meal' && e.amount) {
@@ -1078,6 +1132,10 @@
       else if (op.op === 'product_delete') call = post({ action: 'product_delete', upc: op.upc });
       else if (op.op === 'dish_save') call = post({ action: 'dish_save', name: op.name, meal: op.meal, ingredients: op.ingredients });
       else if (op.op === 'dish_delete') call = post({ action: 'dish_delete', name: op.name });
+      else if (op.op === 'med_save') call = post({ action: 'med_save', name: op.name, dose: op.dose, schedule: op.schedule, started: op.started, active: op.active });
+      else if (op.op === 'med_stop') call = post({ action: 'med_stop', key: op.key, stopped: op.stopped });
+      else if (op.op === 'med_delete') call = post({ action: 'med_delete', key: op.key });
+      else if (op.op === 'dose_save') call = post({ action: 'dose_save', name: op.name, dose: op.dose, ts: op.ts });
       else if (op.op === 'symptom_type_save') call = post({ action: 'symptom_type_save', label: op.label, daily: op.daily, active: op.active });
       else if (op.op === 'symptom_type_delete') call = post({ action: 'symptom_type_delete', key: op.key });
       else call = Promise.resolve({ ok: true });
@@ -1105,6 +1163,9 @@
       return post({ action: 'symptom_types' });
     }).then(function (tres) {
       if (tres && tres.ok && Array.isArray(tres.types)) { symTypes = tres.types; saveCache(); renderSymPicker(); }
+      return post({ action: 'med_list' });
+    }).then(function (mres) {
+      if (mres && mres.ok && Array.isArray(mres.meds)) { meds = mres.meds; saveCache(); renderMeds(); }
       syncing = false; render(); refreshSyncPill();
       if (libBack.classList.contains('on')) renderLibrary();
     }).catch(function () { syncing = false; refreshSyncPill(); });
@@ -1114,6 +1175,7 @@
     (res.meals || []).forEach(function (m) { out.push({ kind: 'meal', id: m.id, ts: Number(m.ts), text: m.text, meal: m.meal, amount: m.amount || '' }); });
     (res.symptoms || []).forEach(function (s) { out.push({ kind: 'symptom', id: s.id, ts: Number(s.ts), text: s.text, severity: Number(s.severity), type: s.type || '' }); });
     (res.bathroom || []).forEach(function (b) { out.push({ kind: 'bathroom', id: b.id, ts: Number(b.ts), text: b.text || '', bristol: Number(b.bristol) }); });
+    (res.doses || []).forEach(function (d) { out.push({ kind: 'dose', id: d.id, ts: Number(d.ts), text: d.text || '', name: d.name, dose: d.dose || '' }); });
     (res.wearable || []).forEach(function (w) {
       var d = String(w.date || '').slice(0, 10);
       function has(v) { return v !== '' && v != null && !(typeof v === 'number' && isNaN(v)); }
@@ -1478,15 +1540,17 @@
     if (p.kind === 'dish') { var db = document.createElement('span'); db.className = 'lib-badge dish'; db.textContent = 'Dish'; meta.appendChild(db); }
     else if (p.brand) { var br = document.createElement('span'); br.className = 'lib-brand'; br.textContent = p.brand; meta.appendChild(br); }
     if (meta.childNodes.length) main.appendChild(meta);
+    var ingPrev = document.createElement('div'); ingPrev.className = 'lib-ing-prev';
+    ingPrev.textContent = p.ingredients ? String(p.ingredients).slice(0, 90) : 'no ingredients yet';
+    if (!p.ingredients) ingPrev.classList.add('empty');
+    main.appendChild(ingPrev);
     main.addEventListener('click', function () { selectFromLibrary(p); });
     row.appendChild(main);
 
     var ops = document.createElement('div'); ops.className = 'lib-ops';
-    if (p.kind !== 'dish') {   // dishes are name-keyed, so no inline rename; products keep Edit
-      var edit = document.createElement('button'); edit.type = 'button'; edit.className = 'lib-op'; edit.textContent = 'Edit';
-      edit.addEventListener('click', function () { editRow(row, p); });
-      ops.appendChild(edit);
-    }
+    var edit = document.createElement('button'); edit.type = 'button'; edit.className = 'lib-op'; edit.textContent = 'Edit';
+    edit.addEventListener('click', function () { editRow(row, p); });
+    ops.appendChild(edit);
     var del = document.createElement('button'); del.type = 'button'; del.className = 'lib-op del'; del.textContent = 'Delete';
     del.addEventListener('click', function () { deleteItem(p); });
     ops.appendChild(del);
@@ -1497,24 +1561,59 @@
   function editRow(row, p) {
     row.textContent = ''; row.className = 'lib-row';
     var box = document.createElement('div'); box.className = 'lib-edit'; box.style.flex = '1';
-    var nameIn = document.createElement('input'); nameIn.type = 'text'; nameIn.value = p.name || ''; nameIn.maxLength = 200; nameIn.setAttribute('aria-label', 'Item name');
+
+    var nameIn = document.createElement('input'); nameIn.type = 'text'; nameIn.value = p.name || '';
+    nameIn.maxLength = 200; nameIn.setAttribute('aria-label', 'Item name');
+
     var sel = document.createElement('select');
     ['', 'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Other'].forEach(function (m) {
       var o = document.createElement('option'); o.value = m; o.textContent = m || '(no meal type)';
       if ((p.meal || '') === m) o.selected = true; sel.appendChild(o);
     });
+
+    var ingLbl = document.createElement('div'); ingLbl.className = 'lib-ing-label';
+    ingLbl.textContent = 'Ingredients (comma separated) — used by the review';
+    var ingIn = document.createElement('textarea'); ingIn.className = 'lib-ing';
+    ingIn.value = p.ingredients || ''; ingIn.rows = 3; ingIn.maxLength = 1000;
+    ingIn.setAttribute('aria-label', 'Ingredients');
+    ingIn.placeholder = 'e.g. greek yogurt, frozen mango, orange juice, chia seeds, creatine';
+
     var btns = document.createElement('div'); btns.className = 'lib-edit-btns';
     var save = document.createElement('button'); save.type = 'button'; save.className = 'lib-save'; save.textContent = 'Save';
     var cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'lib-cancel'; cancel.textContent = 'Cancel';
     save.addEventListener('click', function () {
       var nm = nameIn.value.trim();
       if (!nm) { nameIn.focus(); return; }
-      renameProduct(p, nm, sel.value);
+      saveLibItem(p, nm, sel.value, ingIn.value.trim());
     });
     cancel.addEventListener('click', renderLibrary);
     btns.appendChild(cancel); btns.appendChild(save);
-    box.appendChild(nameIn); box.appendChild(sel); box.appendChild(btns);
+
+    box.appendChild(nameIn); box.appendChild(sel);
+    box.appendChild(ingLbl); box.appendChild(ingIn); box.appendChild(btns);
     row.appendChild(box); nameIn.focus();
+  }
+
+  // Handles products (keyed by UPC) and dishes (keyed by normalised name). Renaming a dish changes
+  // its key, so that case is a delete + recreate rather than an in-place update.
+  function saveLibItem(p, name, meal, ingredients) {
+    if (p.kind === 'dish') {
+      if (p.name && normName(p.name) !== normName(name)) {
+        outbox.push({ op: 'dish_delete', name: p.name });
+      }
+      outbox.push({ op: 'dish_save', name: name, meal: meal || '', ingredients: ingredients });
+    } else {
+      outbox.push({ op: 'product_save', upc: String(p.upc), name: name, meal: meal || '',
+                    brand: p.brand || '', ingredients: ingredients });
+    }
+    saveCache(); refreshSyncPill(); renderLibrary(); flush();
+  }
+
+  // Create a dish by hand — previously dishes could only be born from a photo.
+  function newDishRow() {
+    var host = document.createElement('div'); host.className = 'lib-row';
+    libList.insertBefore(host, libList.firstChild);
+    editRow(host, { kind: 'dish', name: '', meal: '', ingredients: '' });
   }
 
   function selectFromLibrary(p) {
@@ -1524,12 +1623,6 @@
       mealBtns.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-meal') === p.meal); });
     }
     closeLibrary(); showTab('meal'); foodInput.focus(); hideDupHint();
-  }
-
-  function renameProduct(p, name, meal) {
-    // reuse product_save upsert (keyed by upc); blank brand/ingredients are preserved server-side
-    outbox.push({ op: 'product_save', upc: String(p.upc), name: name, meal: meal || '' });
-    saveCache(); refreshSyncPill(); renderLibrary(); flush();
   }
 
   function deleteItem(p) {
@@ -1547,6 +1640,7 @@
   $('libClose').addEventListener('click', closeLibrary);
   libBack.addEventListener('click', function (ev) { if (ev.target === libBack) closeLibrary(); });
   libSearch.addEventListener('input', renderLibrary);
+  $('libNewDish').addEventListener('click', newDishRow);
 
   // ================= Symptom types =================
   // Types live in the Sheet; the outbox carries edits so this works offline like everything else.
@@ -1651,17 +1745,23 @@
     return Math.max(jac, contain);
   }
 
-  function bestLibMatch(text) {
+  // Returns up to `limit` matching library items, best first. Several items can share a word
+  // ("mango"), so showing only the single top scorer often hid the one actually wanted.
+  function topLibMatches(text, limit) {
     var t = normName(text);
-    if (t.length < 4) return null;
-    var items = libraryView(), best = null, bestScore = 0;
+    if (t.length < 3) return [];
+    var items = libraryView(), scored = [];
     for (var i = 0; i < items.length; i++) {
       var n = normName(items[i].name); if (!n) continue;
-      if (n === t) return null;                 // already the canonical name — nothing to suggest
+      if (n === t) return [];                   // already the canonical name — nothing to suggest
       var score = nameSimilarity(t, n);
-      if (score > bestScore) { bestScore = score; best = items[i]; }
+      if (score >= 0.4) scored.push({ item: items[i], score: score });
     }
-    return (bestScore >= 0.5 && best) ? best : null;
+    scored.sort(function (a, b) {
+      if (b.score !== a.score) return b.score - a.score;
+      return String(a.item.name || '').length - String(b.item.name || '').length;
+    });
+    return scored.slice(0, limit || 5).map(function (x) { return x.item; });
   }
 
   function hideDupHint() { dupHint.style.display = 'none'; dupHint.textContent = ''; }
@@ -1669,18 +1769,27 @@
   function updateDupHint() {
     var text = foodInput.value.trim();
     if (!text || normName(text) === dupSuppressed) { hideDupHint(); return; }
-    var match = bestLibMatch(text);
-    if (!match) { hideDupHint(); return; }
+    var matches = topLibMatches(text, 5);
+    if (!matches.length) { hideDupHint(); return; }
     dupHint.textContent = '';
+
     var q = document.createElement('span'); q.className = 'dup-q';
-    q.appendChild(document.createTextNode('Did you mean '));
-    var nm = document.createElement('b'); nm.textContent = match.name; q.appendChild(nm);
-    q.appendChild(document.createTextNode('?'));
-    var use = document.createElement('button'); use.type = 'button'; use.className = 'dup-use'; use.textContent = 'Use';
-    use.addEventListener('click', function () { adoptMatch(match); });
+    q.textContent = matches.length === 1 ? 'Did you mean:' : 'Did you mean one of these:';
+    dupHint.appendChild(q);
+
+    var list = document.createElement('div'); list.className = 'dup-list';
+    matches.forEach(function (m) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'dup-pick';
+      b.textContent = m.name;
+      if (m.kind === 'dish') { var dot = document.createElement('span'); dot.className = 'dup-dot'; b.appendChild(dot); }
+      b.addEventListener('click', function () { adoptMatch(m); });
+      list.appendChild(b);
+    });
+    dupHint.appendChild(list);
+
     var x = document.createElement('button'); x.type = 'button'; x.className = 'dup-x'; x.setAttribute('aria-label', 'Dismiss'); x.textContent = '\u00d7';
     x.addEventListener('click', function () { dupSuppressed = normName(foodInput.value.trim()); hideDupHint(); });
-    dupHint.appendChild(q); dupHint.appendChild(use); dupHint.appendChild(x);
+    dupHint.appendChild(x);
     dupHint.style.display = 'flex';
   }
 
@@ -1889,6 +1998,119 @@
   window.addEventListener('online', function () { flush(); });
   window.addEventListener('offline', function () { refreshSyncPill(); });
 
+  // ================= Meds & supplements =================
+  var medsBack = $('medsBack'), medsList = $('medsList'), medsMsg = $('medsMsg');
+  var medName = $('medName'), medDose = $('medDose'), medSchedule = $('medSchedule'), medStarted = $('medStarted');
+
+  function medsView() {
+    var map = {};
+    meds.forEach(function (m) {
+      if (!m || !m.name) return;
+      map[normName(m.name)] = {
+        key: normName(m.name), name: m.name, dose: m.dose || '', schedule: m.schedule || '',
+        started: String(m.started || '').slice(0, 10), stopped: String(m.stopped || '').slice(0, 10),
+        active: isTrue(m.active)
+      };
+    });
+    outbox.forEach(function (op) {
+      if (op.op === 'med_save') {
+        map[normName(op.name)] = { key: normName(op.name), name: op.name, dose: op.dose || '',
+          schedule: op.schedule || '', started: op.started || '', stopped: '', active: true };
+      }
+      if (op.op === 'med_stop') { var e = map[op.key]; if (e) { e.active = false; e.stopped = op.stopped || ''; } }
+      if (op.op === 'med_delete') { delete map[op.key]; }
+    });
+    return Object.keys(map).map(function (k) { return map[k]; })
+      .sort(function (a, b) {
+        if (a.active !== b.active) return a.active ? -1 : 1;   // current first, stopped below
+        return a.name.localeCompare(b.name);
+      });
+  }
+
+  function openMeds() {
+    medsMsg.textContent = ''; medsMsg.className = 'modal-msg';
+    medName.value = ''; medDose.value = ''; medSchedule.value = 'daily';
+    medStarted.value = toDateInput(new Date());
+    closeModal(); renderMeds(); medsBack.classList.add('on');
+    if (navigator.onLine) flush();
+  }
+  function closeMeds() { medsBack.classList.remove('on'); }
+
+  function renderMeds() {
+    if (!medsList) return;
+    var list = medsView();
+    medsList.textContent = '';
+    if (!list.length) {
+      var e = document.createElement('div'); e.className = 'empty'; e.style.margin = '18px 0';
+      e.textContent = 'Nothing added yet.';
+      medsList.appendChild(e); return;
+    }
+    list.forEach(function (m) {
+      var row = document.createElement('div'); row.className = 'med-row' + (m.active ? '' : ' stopped');
+      var main = document.createElement('div'); main.className = 'med-main';
+      var nm = document.createElement('div'); nm.className = 'med-name';
+      nm.textContent = m.name + (m.dose ? ('  ' + m.dose) : '');
+      var meta = document.createElement('div'); meta.className = 'med-meta';
+      var bits = [];
+      if (m.schedule) bits.push(m.schedule);
+      if (m.started) bits.push('since ' + m.started);
+      if (!m.active && m.stopped) bits.push('stopped ' + m.stopped);
+      else if (!m.active) bits.push('stopped');
+      meta.textContent = bits.join('  ·  ');
+      main.appendChild(nm); main.appendChild(meta); row.appendChild(main);
+
+      // as-needed items get a one-tap "took it now"
+      if (m.active && /need/i.test(m.schedule)) {
+        var took = document.createElement('button'); took.type = 'button'; took.className = 'sym-mgr-daily';
+        took.textContent = 'Took it';
+        took.addEventListener('click', function () {
+          outbox.push({ op: 'dose_save', name: m.name, dose: m.dose || '', ts: Date.now() });
+          saveCache(); render(); refreshSyncPill(); flush();
+          medsMsg.className = 'modal-msg ok'; medsMsg.textContent = 'Logged a dose of ' + m.name + '.';
+        });
+        row.appendChild(took);
+      }
+      if (m.active) {
+        var stop = document.createElement('button'); stop.type = 'button'; stop.className = 'lib-op';
+        stop.textContent = 'Stop';
+        stop.addEventListener('click', function () {
+          if (!window.confirm('Mark "' + m.name + '" as stopped today? Its history stays, which is what lets a review compare before and after.')) return;
+          outbox.push({ op: 'med_stop', key: m.key, stopped: toDateInput(new Date()) });
+          saveCache(); refreshSyncPill(); renderMeds(); flush();
+        });
+        row.appendChild(stop);
+      }
+      var del = document.createElement('button'); del.type = 'button'; del.className = 'lib-op del';
+      del.textContent = 'Remove';
+      del.addEventListener('click', function () {
+        if (!window.confirm('Remove "' + m.name + '" entirely? If you simply stopped taking it, use Stop instead — that keeps the before/after comparison intact.')) return;
+        outbox.push({ op: 'med_delete', key: m.key });
+        saveCache(); refreshSyncPill(); renderMeds(); flush();
+      });
+      row.appendChild(del);
+      medsList.appendChild(row);
+    });
+  }
+
+  function addMed() {
+    var name = medName.value.trim();
+    if (!name) { medName.focus(); return; }
+    if (medsView().some(function (m) { return normName(m.name) === normName(name) && m.active; })) {
+      medsMsg.className = 'modal-msg err'; medsMsg.textContent = 'You already track that one.'; return;
+    }
+    outbox.push({ op: 'med_save', name: name, dose: medDose.value.trim(),
+      schedule: medSchedule.value, started: medStarted.value || toDateInput(new Date()), active: true });
+    saveCache(); refreshSyncPill(); renderMeds(); flush();
+    medsMsg.className = 'modal-msg ok'; medsMsg.textContent = 'Added "' + name + '".';
+    medName.value = ''; medDose.value = ''; medName.focus();
+  }
+
+  $('openMedsBtn').addEventListener('click', openMeds);
+  $('medAdd').addEventListener('click', addMed);
+  medName.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') addMed(); });
+  $('medsClose').addEventListener('click', closeMeds);
+  medsBack.addEventListener('click', function (ev) { if (ev.target === medsBack) closeMeds(); });
+
   // ================= Export report =================
   var exportBack = $('exportBack'), exportMsg = $('exportMsg'), exportDates = $('exportDates');
   var exportFrom = $('exportFrom'), exportTo = $('exportTo'), exportRange = 'all';
@@ -1993,6 +2215,19 @@
           if (e.restingHR) parts2.push('resting HR ' + e.restingHR);
           if (e.hrv) parts2.push('HRV ' + e.hrv);
           detail = esc(parts2.join(', '));
+        }
+        else if (e.kind === 'dose') {
+          type = 'Dose';
+          detail = esc(e.name || '') + (e.dose ? ('  &mdash;  ' + esc(e.dose)) : '') + (e.text ? ('  &mdash;  ' + esc(e.text)) : '');
+        }
+        else if (e.kind === 'activity') {
+          type = 'Activity';
+          var parts3 = [];
+          if (e.steps) parts3.push(Number(e.steps).toLocaleString() + ' steps');
+          if (e.activeKcal) parts3.push(e.activeKcal + ' active kcal');
+          if (e.hrAvg) parts3.push('avg HR ' + e.hrAvg);
+          if (e.hrMax) parts3.push('max HR ' + e.hrMax);
+          detail = esc(parts3.join(', '));
         }
         else { type = e.type ? esc(e.type) : 'Symptom'; detail = 'Severity ' + (e.severity || '?') + '/5' + (e.text ? ('  &mdash;  ' + esc(e.text)) : ''); }
         return '<tr><td class="t">' + esc(timeLabel(e.ts)) + '</td><td class="ty">' + type + '</td><td>' + detail + '</td></tr>';
